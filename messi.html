@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Messi • Jeremy Ríos Ríos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020b12;
+      --green-main: #10b981;
+      --green-bright: #34d399;
+      --blue-main: #0ea5e9;
+      --blue-bright: #38bdf8;
+      --gold: #fbbf24;
+      --border: rgba(52, 211, 153, 0.55);
+      --text: #f0fdf4;
+      --muted: #cbd5e1;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.34), transparent 42%),
+        radial-gradient(circle at 86% 82%, rgba(14, 165, 233, 0.36), transparent 46%),
+        radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.2), transparent 65%),
+        linear-gradient(145deg, #01080e 0%, #051c2c 50%, #032524 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .blueprint-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.12) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: 0;
+      animation: panGrid 26s linear infinite;
+    }
+
+    @keyframes panGrid {
+      0% { background-position: 0 0; }
+      100% { background-position: 68px 68px; }
+    }
+
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.48;
+      animation: driftOrb 13s ease-in-out infinite alternate;
+    }
+
+    .orb-green {
+      width: 340px;
+      height: 340px;
+      background: #10b981;
+      top: 8%;
+      left: -60px;
+    }
+
+    .orb-blue {
+      width: 370px;
+      height: 370px;
+      background: #0ea5e9;
+      bottom: 8%;
+      right: -70px;
+      animation-delay: -6s;
+    }
+
+    @keyframes driftOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(45px, -35px) scale(1.14); }
+    }
+
+    /* Capa de mensajes flotantes en cualquier lado de la pantalla */
+    .toast-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 95;
+      overflow: hidden;
+    }
+
+    .floating-popup {
+      position: fixed;
+      max-width: min(320px, 84vw);
+      padding: 0.85rem 1.25rem;
+      border-radius: 18px;
+      font-weight: 800;
+      font-size: clamp(1rem, 2.5vw, 1.22rem);
+      letter-spacing: 0.4px;
+      text-align: center;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transform: scale(0.85) translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .floating-popup.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .floating-popup.mistake {
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.95), rgba(153, 27, 27, 0.95));
+      border: 2px solid #fca5a5;
+      color: #fef2f2;
+    }
+
+    .floating-popup.celebrate {
+      background: linear-gradient(135deg, rgba(6, 78, 59, 0.96), rgba(3, 105, 161, 0.96));
+      border: 2px solid var(--gold);
+      color: #fef08a;
+    }
+
+    /* Aviso previo antes de iniciar el partido */
+    .intro-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(2, 11, 18, 0.78);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .intro-modal.hidden {
+      display: none;
+    }
+
+    .intro-card {
+      max-width: 440px;
+      width: 100%;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.2), rgba(5, 24, 36, 0.95), rgba(14, 165, 233, 0.2));
+      border: 1.5px solid var(--green-bright);
+      border-radius: 24px;
+      padding: 1.6rem 1.45rem;
+      text-align: center;
+      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.7);
+    }
+
+    .intro-card h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green-bright), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.65rem;
+    }
+
+    .intro-card p {
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Barra de navegación de ancho completo */
+    .navbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background: linear-gradient(90deg, rgba(4, 24, 36, 0.88), rgba(5, 34, 42, 0.88), rgba(4, 24, 36, 0.88));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      padding: calc(0.75rem + env(safe-area-inset-top)) 2rem 0.75rem;
+    }
+
+    .navbar::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+      opacity: 0.75;
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.6px;
+      text-decoration: none;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-bright);
+      animation: dotPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.65; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .nav-links a {
+      position: relative;
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      transition: color 0.22s ease, background 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-links a.active {
+      color: #fff;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .nav-links a.active::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      box-shadow: 0 0 10px var(--green-bright);
+    }
+
+    /* Escenario */
+    .stage {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      max-width: 1020px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.15rem 1rem calc(4.8rem + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .game-shell {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.14), rgba(5, 24, 36, 0.78), rgba(14, 165, 233, 0.16));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 1.3rem 1.45rem 1.45rem;
+      box-shadow:
+        0 22px 52px rgba(0, 0, 0, 0.6),
+        0 0 38px rgba(16, 185, 129, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      animation: fadeUp 0.55s ease both;
+    }
+
+    .game-shell::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+
+    .game-title {
+      font-size: clamp(1.25rem, 2.9vw, 1.7rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-chip {
+      background: rgba(3, 18, 28, 0.86);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 0.4rem 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+    }
+
+    .hud-chip strong {
+      color: var(--green-bright);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1.5px solid rgba(56, 189, 248, 0.42);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      background: #031926;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      cursor: crosshair;
+    }
+
+    .status-note {
+      margin-top: 0.8rem;
+      background: rgba(3, 20, 32, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-left: 4px solid var(--blue-bright);
+      border-radius: 12px;
+      padding: 0.65rem 0.95rem;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+    }
+
+    .win-banner {
+      display: none;
+      margin-top: 0.85rem;
+      background: linear-gradient(90deg, rgba(251, 191, 36, 0.22), rgba(16, 185, 129, 0.24));
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      padding: 0.95rem 1.15rem;
+      color: #fef9c3;
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .win-banner.show {
+      display: block;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .controls-footer {
+      margin-top: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .key-hint {
+      font-size: 0.86rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    kbd {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.76rem;
+      background: rgba(2, 16, 26, 0.9);
+      border: 1px solid rgba(52, 211, 153, 0.5);
+      color: var(--green-bright);
+      padding: 0.18rem 0.48rem;
+      border-radius: 7px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 42px);
+      grid-template-rows: repeat(2, 38px);
+      gap: 0.3rem;
+    }
+
+    .dpad-btn {
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #f0fdf4;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dpad-btn:active,
+    .dpad-btn.pressed {
+      transform: scale(0.94);
+      background: rgba(16, 185, 129, 0.4);
+      border-color: var(--green-bright);
+    }
+
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+
+    .action-btns {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-glow {
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.88rem;
+      border: none;
+      padding: 0.68rem 1.25rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-next {
+      text-decoration: none;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid var(--blue-bright);
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 0.68rem 1.2rem;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-next:hover {
+      background: rgba(16, 185, 129, 0.26);
+      border-color: var(--green-bright);
+      color: #fff;
+    }
+
+    /* Barra flotante de audio */
+    .audio-bar {
+      position: fixed;
+      bottom: calc(0.85rem + env(safe-area-inset-bottom));
+      right: 0.9rem;
+      z-index: 80;
+      background: rgba(3, 20, 30, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--green-bright);
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 18px rgba(16, 185, 129, 0.22);
+    }
+
+    .audio-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.78rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .audio-meta {
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .audio-meta strong {
+      display: block;
+      color: var(--green-bright);
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: calc(0.6rem + env(safe-area-inset-top)) 0.8rem 0.6rem;
+      }
+
+      .nav-inner {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .brand {
+        font-size: 0.86rem;
+      }
+
+      .nav-links {
+        gap: 0.15rem;
+      }
+
+      .nav-links a {
+        font-size: 0.78rem;
+        padding: 0.32rem 0.6rem;
+      }
+
+      .stage {
+        padding: 0.85rem 0.75rem calc(5rem + env(safe-area-inset-bottom));
+      }
+
+      .game-shell {
+        padding: 1rem 0.9rem 1.15rem;
+        border-radius: 22px;
+      }
+
+      canvas {
+        aspect-ratio: 4 / 3;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blueprint-grid"></div>
+  <div class="ambient-orb orb-green"></div>
+  <div class="ambient-orb orb-blue"></div>
+
+  <!-- Contenedor de mensajes emergentes en cualquier lado de la pantalla -->
+  <div class="toast-layer" id="toastLayer"></div>
+
+  <!-- Mensaje previo antes de iniciar el partido -->
+  <div class="intro-modal" id="introModal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <div class="intro-card">
+      <h2 id="introTitle">⚽ ¡Atención antes de iniciar!</h2>
+      <p>
+        Para poder ganar este partido con <strong>Messi</strong> debes lograr <strong>3 goles</strong> esquivando a los defensas y venciendo al portero.
+      </p>
+      <button class="btn-glow" type="button" onclick="startMatchFromIntro()">¡A jugar!</button>
+    </div>
+  </div>
+
+  <!-- Barra de navegación de ancho completo -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-dot"></span>
+        JEREMY • RÍOS RÍOS
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="One.html">One Piece</a>
+        <a href="messi.html" class="active">Messi</a>
+        <a href="arqui.html">Arquitectura</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="game-shell">
+      <div class="top-bar">
+        <h1 class="game-title">⚽ Partido de Messi • ¡Mete 3 goles para ganar!</h1>
+        <div class="hud-group">
+          <div class="hud-chip">Goles: <strong id="goalsCount">0 / 3</strong></div>
+          <div class="hud-chip">Atajadas: <strong id="savesCount">0</strong></div>
+          <div class="hud-chip">Robos: <strong id="stealsCount">0</strong></div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="pitchCanvas" width="800" height="500"></canvas>
+      </div>
+
+      <div class="status-note" id="statusNote">
+        Debes lograr <strong>3 goles</strong> para ganar. Muévete con <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> o <kbd>WASD</kbd> y tira con <kbd>Espacio</kbd> o clic.
+      </div>
+
+      <div class="win-banner" id="winBanner">
+        🏆 <strong>¡HAT-TRICK DE MESSI, JEREMY!</strong> Anotaste los 3 goles en un partido bien peleado. ¡Feliz cumpleaños!
+      </div>
+
+      <div class="controls-footer">
+        <div class="key-hint">
+          Mover: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> o <kbd>WASD</kbd> • Tirar: <kbd>Espacio</kbd> o clic en cancha
+        </div>
+
+        <div class="dpad" aria-label="Controles de desplazamiento">
+          <button class="dpad-btn dpad-up" type="button" data-dir="up">↑</button>
+          <button class="dpad-btn dpad-left" type="button" data-dir="left">←</button>
+          <button class="dpad-btn dpad-down" type="button" data-dir="down">↓</button>
+          <button class="dpad-btn dpad-right" type="button" data-dir="right">→</button>
+        </div>
+
+        <div class="action-btns">
+          <button class="btn-glow" type="button" onclick="shootBall()">⚽ Tirar</button>
+          <button class="btn-glow" type="button" onclick="resetMatch(true)">🔄 Reiniciar partido</button>
+          <a href="arqui.html" class="btn-next">Siguiente: Arquitectura →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Control de música -->
+  <div class="audio-bar">
+    <button class="audio-btn" id="audioToggle" type="button" onclick="toggleAudio()">▶</button>
+    <div class="audio-meta">
+      <strong>Sorpresa musical</strong>
+      <span id="audioState" style="color: #cbd5e1;">Toca para oír</span>
+    </div>
+  </div>
+
+  <audio id="bgMusic" src="Mananitas.mp3" preload="auto" loop></audio>
+
+  <script>
+    const toastLayer = document.getElementById('toastLayer');
+    const introModal = document.getElementById('introModal');
+    let matchStarted = false;
+    let mistakeCooldown = 0;
+
+    // 1 mensaje distinto por cada equivocación (dura 3 segundos)
+    const mistakeMessages = [
+      '¡QUE MENSO!',
+      '¡AJAJA TODO BABOSO!',
+      '¡SE EQUIVOCO JAJAJ!'
+    ];
+    let lastMistakeIndex = -1;
+
+    // 1 mensaje distinto por cada gol o victoria (dura 3 segundos)
+    const winMessages = [
+      '¡LOBA LOBA!',
+      '¡APOCO SI MI LEONA!',
+      '¡QUE DIVA!'
+    ];
+    let lastWinIndex = -1;
+
+    function getNextDistinctIndex(listLength, lastIdx) {
+      if (listLength <= 1) return 0;
+      let idx = Math.floor(Math.random() * listLength);
+      if (idx === lastIdx) {
+        idx = (idx + 1) % listLength;
+      }
+      return idx;
+    }
+
+    function spawnPopupAtRandomSpot(text, variantClass, durationMs = 3000) {
+      const el = document.createElement('div');
+      el.className = `floating-popup ${variantClass}`;
+      el.textContent = text;
+      toastLayer.appendChild(el);
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const rect = el.getBoundingClientRect();
+      const maxX = Math.max(16, vw - rect.width - 24);
+      const maxY = Math.max(80, vh - rect.height - 80);
+      const randX = 16 + Math.random() * maxX;
+      const randY = 76 + Math.random() * maxY;
+
+      el.style.left = `${randX}px`;
+      el.style.top = `${randY}px`;
+
+      requestAnimationFrame(() => {
+        el.classList.add('visible');
+      });
+
+      setTimeout(() => {
+        el.classList.remove('visible');
+        setTimeout(() => el.remove(), 260);
+      }, durationMs);
+    }
+
+    function triggerMistakePopup() {
+      if (mistakeCooldown > 0) return;
+      mistakeCooldown = 28;
+      lastMistakeIndex = getNextDistinctIndex(mistakeMessages.length, lastMistakeIndex);
+      spawnPopupAtRandomSpot(mistakeMessages[lastMistakeIndex], 'mistake', 3000);
+    }
+
+    function triggerWinPopup() {
+      lastWinIndex = getNextDistinctIndex(winMessages.length, lastWinIndex);
+      spawnPopupAtRandomSpot(winMessages[lastWinIndex], 'celebrate', 3000);
+    }
+
+    function startMatchFromIntro() {
+      introModal.classList.add('hidden');
+      matchStarted = true;
+    }
+
+    const canvas = document.getElementById('pitchCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const keys = { up: false, down: false, left: false, right: false };
+    let goals = 0;
+    let saves = 0;
+    let steals = 0;
+    let won = false;
+    let animTime = 0;
+    let goalCooldown = 0;
+
+    const goal = {
+      x: 735,
+      y: 175,
+      w: 36,
+      h: 150
+    };
+
+    const messi = {
+      x: 215,
+      y: 250,
+      r: 14,
+      speed: 3.15,
+      walkCycle: 0
+    };
+
+    const ball = {
+      x: messi.x + 16,
+      y: messi.y,
+      r: 7.5,
+      vx: 0,
+      vy: 0,
+      inFlight: false
+    };
+
+    const keeper = {
+      x: 705,
+      y: 250,
+      w: 22,
+      h: 48,
+      vy: 2.35,
+      baseSpeed: 2.35,
+      runCycle: 0
+    };
+
+    let defenders = [];
+
+    function createDefenders() {
+      const boost = goals * 0.35;
+      return [
+        { x: 410, y: 155, r: 14, minY: 85, maxY: 415, vy: 2.2 + boost, chase: false, jersey: '#dc2626', hair: '#1f2937', num: '4', walkCycle: 0 },
+        { x: 515, y: 345, r: 14, minY: 85, maxY: 415, vy: -(2.45 + boost), chase: true, jersey: '#b91c1c', hair: '#451a03', num: '5', walkCycle: 1.5 },
+        { x: 605, y: 215, r: 14, minY: 110, maxY: 390, vy: 2.6 + boost, chase: true, jersey: '#991b1b', hair: '#111827', num: '2', walkCycle: 3.1 }
+      ];
+    }
+
+    function setNote(html) {
+      document.getElementById('statusNote').innerHTML = html;
+    }
+
+    function placeBallAtMessi() {
+      ball.inFlight = false;
+      ball.vx = 0;
+      ball.vy = 0;
+      ball.x = messi.x + 15;
+      ball.y = messi.y + 4;
+    }
+
+    function resetPositionsAfterEvent() {
+      messi.x = 215;
+      messi.y = 250;
+      messi.walkCycle = 0;
+      placeBallAtMessi();
+      keeper.y = goal.y + goal.h / 2;
+      keeper.vy = (keeper.baseSpeed + goals * 0.45) * (Math.random() > 0.5 ? 1 : -1);
+      keeper.runCycle = 0;
+      defenders = createDefenders();
+    }
+
+    function resetMatch(showIntroAgain = false) {
+      goals = 0;
+      saves = 0;
+      steals = 0;
+      won = false;
+      goalCooldown = 0;
+      document.getElementById('goalsCount').textContent = '0 / 3';
+      document.getElementById('savesCount').textContent = '0';
+      document.getElementById('stealsCount').textContent = '0';
+      document.getElementById('winBanner').classList.remove('show');
+      resetPositionsAfterEvent();
+      setNote('Debes lograr <strong>3 goles</strong> para ganar. Esquiva defensas y supera al portero.');
+
+      if (showIntroAgain) {
+        matchStarted = false;
+        introModal.classList.remove('hidden');
+      }
+    }
+
+    function shootBall(targetX, targetY) {
+      if (!matchStarted || won || ball.inFlight || goalCooldown > 0) return;
+
+      const aimX = typeof targetX === 'number' ? targetX : goal.x + goal.w * 0.45;
+      const aimY = typeof targetY === 'number' ? targetY : goal.y + 20 + Math.random() * (goal.h - 40);
+
+      const dx = aimX - ball.x;
+      const dy = aimY - ball.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const shotSpeed = 8.4;
+
+      ball.inFlight = true;
+      ball.vx = (dx / len) * shotSpeed;
+      ball.vy = (dy / len) * shotSpeed;
+      setNote('⚡ ¡Disparo de Messi! A ver si pasa al portero...');
+    }
+
+    function updateKeeper() {
+      const currentSpeed = keeper.baseSpeed + goals * 0.45;
+
+      if (ball.inFlight && ball.vx > 0 && ball.x > 430) {
+        const diffY = ball.y - keeper.y;
+        keeper.vy = Math.max(-currentSpeed * 1.25, Math.min(currentSpeed * 1.25, diffY * 0.14));
+      } else if (Math.abs(keeper.vy) < currentSpeed * 0.7) {
+        keeper.vy = currentSpeed * (keeper.vy >= 0 ? 1 : -1);
+      }
+
+      keeper.y += keeper.vy;
+      keeper.runCycle += 0.25;
+
+      const topLimit = goal.y + keeper.h / 2 + 4;
+      const bottomLimit = goal.y + goal.h - keeper.h / 2 - 4;
+      if (keeper.y <= topLimit) {
+        keeper.y = topLimit;
+        keeper.vy = Math.abs(keeper.vy);
+      } else if (keeper.y >= bottomLimit) {
+        keeper.y = bottomLimit;
+        keeper.vy = -Math.abs(keeper.vy);
+      }
+    }
+
+    function updateDefenders() {
+      const speedBoost = goals * 0.35;
+
+      for (const d of defenders) {
+        const prevX = d.x;
+        const prevY = d.y;
+        const distToMessi = Math.hypot(messi.x - d.x, messi.y - d.y);
+
+        if (d.chase && distToMessi < 155 && !ball.inFlight) {
+          const angle = Math.atan2(messi.y - d.y, messi.x - d.x);
+          const chaseSpd = 1.65 + speedBoost;
+          d.x += Math.cos(angle) * chaseSpd;
+          d.y += Math.sin(angle) * chaseSpd;
+        } else {
+          d.y += d.vy;
+          if (d.y <= d.minY || d.y >= d.maxY) {
+            d.vy *= -1;
+          }
+        }
+
+        d.x = Math.max(260, Math.min(675, d.x));
+        d.y = Math.max(70, Math.min(430, d.y));
+        d.walkCycle += Math.hypot(d.x - prevX, d.y - prevY) * 0.12;
+
+        if (!ball.inFlight && distToMessi < messi.r + d.r - 2) {
+          steals++;
+          document.getElementById('stealsCount').textContent = steals;
+          resetPositionsAfterEvent();
+          triggerMistakePopup();
+          setNote('🛡️ ¡Te robaron el balón! Regresas a armar la jugada.');
+          return;
+        }
+      }
+    }
+
+    function updateBallAndGoal() {
+      if (!ball.inFlight) {
+        ball.x = messi.x + 15;
+        ball.y = messi.y + 4;
+        return;
+      }
+
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      const keeperLeft = keeper.x - keeper.w / 2;
+      const keeperRight = keeper.x + keeper.w / 2;
+      const keeperTop = keeper.y - keeper.h / 2;
+      const keeperBottom = keeper.y + keeper.h / 2;
+
+      if (
+        ball.x + ball.r >= keeperLeft &&
+        ball.x - ball.r <= keeperRight &&
+        ball.y + ball.r >= keeperTop &&
+        ball.y - ball.r <= keeperBottom
+      ) {
+        saves++;
+        document.getElementById('savesCount').textContent = saves;
+        placeBallAtMessi();
+        triggerMistakePopup();
+        setNote('🧤 ¡Atajadón del portero! Muévete de ángulo y vuelve a intentar.');
+        return;
+      }
+
+      if (
+        ball.x + ball.r >= goal.x &&
+        ball.x - ball.r <= goal.x + goal.w &&
+        ball.y >= goal.y &&
+        ball.y <= goal.y + goal.h
+      ) {
+        goals++;
+        goalCooldown = 25;
+        document.getElementById('goalsCount').textContent = `${goals} / 3`;
+        triggerWinPopup();
+
+        if (goals >= 3) {
+          won = true;
+          ball.inFlight = false;
+          document.getElementById('winBanner').classList.add('show');
+          setNote('🏆 ¡3 goles anotados! ¡Ganaste el partido con Messi!');
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.6 },
+            colors: ['#fbbf24', '#10b981', '#34d399', '#38bdf8', '#ffffff']
+          });
+        } else {
+          resetPositionsAfterEvent();
+          setNote(`⚽ ¡GOL DE MESSI (${goals}/3)! La defensa y el portero suben de intensidad para el siguiente.`);
+        }
+        return;
+      }
+
+      if (
+        ball.x > canvas.width - 28 ||
+        ball.x < 35 ||
+        ball.y < 38 ||
+        ball.y > canvas.height - 38
+      ) {
+        placeBallAtMessi();
+        triggerMistakePopup();
+        setNote('❌ ¡Se fue desviado! Acomódate y tira de nuevo.');
+      }
+    }
+
+    function updateMessi() {
+      if (mistakeCooldown > 0) mistakeCooldown--;
+      if (goalCooldown > 0) goalCooldown--;
+      if (!matchStarted || won) return;
+
+      let vx = 0;
+      let vy = 0;
+      if (keys.left) vx -= 1;
+      if (keys.right) vx += 1;
+      if (keys.up) vy -= 1;
+      if (keys.down) vy += 1;
+
+      if (vx !== 0 && vy !== 0) {
+        const inv = 1 / Math.SQRT2;
+        vx *= inv;
+        vy *= inv;
+      }
+
+      if (vx !== 0 || vy !== 0) {
+        messi.x = Math.max(55, Math.min(685, messi.x + vx * messi.speed));
+        messi.y = Math.max(55, Math.min(445, messi.y + vy * messi.speed));
+        messi.walkCycle += 0.24;
+      } else {
+        messi.walkCycle = 0;
+      }
+
+      updateDefenders();
+      updateKeeper();
+      updateBallAndGoal();
+    }
+
+    function drawPitch() {
+      const grassGrad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grassGrad.addColorStop(0, '#065f46');
+      grassGrad.addColorStop(0.5, '#047857');
+      grassGrad.addColorStop(1, '#064e3b');
+      ctx.fillStyle = grassGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      for (let i = 0; i < 8; i += 2) {
+        ctx.fillRect(45 + i * 88, 28, 88, canvas.height - 56);
+      }
+
+      ctx.strokeStyle = 'rgba(240, 253, 244, 0.72)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(45, 28, canvas.width - 90, canvas.height - 56);
+
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 28);
+      ctx.lineTo(canvas.width / 2, canvas.height - 28);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, 62, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeRect(canvas.width - 175, 115, 130, 270);
+
+      ctx.fillStyle = 'rgba(226, 232, 240, 0.14)';
+      ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3.5;
+      ctx.strokeRect(goal.x, goal.y, goal.w, goal.h);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1;
+      for (let gx = goal.x + 8; gx < goal.x + goal.w; gx += 9) {
+        ctx.beginPath();
+        ctx.moveTo(gx, goal.y);
+        ctx.lineTo(gx, goal.y + goal.h);
+        ctx.stroke();
+      }
+      for (let gy = goal.y + 10; gy < goal.y + goal.h; gy += 12) {
+        ctx.beginPath();
+        ctx.moveTo(goal.x, gy);
+        ctx.lineTo(goal.x + goal.w, gy);
+        ctx.stroke();
+      }
+    }
+
+    function drawDefenderAvatar(d) {
+      const bob = Math.abs(Math.sin(d.walkCycle)) * -3;
+      const swing = Math.sin(d.walkCycle) * 4.5;
+
+      ctx.save();
+      ctx.translate(d.x, d.y + bob);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 14 - bob, 12, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 4.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-4, 5);
+      ctx.lineTo(-4 + swing, 13);
+      ctx.moveTo(4, 5);
+      ctx.lineTo(4 - swing, 13);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#fed7aa';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(-9, -4);
+      ctx.lineTo(-12, 3 - swing * 0.5);
+      ctx.moveTo(9, -4);
+      ctx.lineTo(12, 3 + swing * 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = d.jersey;
+      ctx.beginPath();
+      ctx.roundRect(-9.5, -6.5, 19, 13, 5);
+      ctx.fill();
+      ctx.strokeStyle = '#fef2f2';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.font = '700 8.5px "Space Mono", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.num, 0, 3);
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -12.5, 7.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = d.hair;
+      ctx.beginPath();
+      ctx.arc(0, -14, 8, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(-2.5, -12.2, 1.2, 0, Math.PI * 2);
+      ctx.arc(1.8, -12.2, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawKeeperAvatar() {
+      const bob = Math.abs(Math.sin(keeper.runCycle)) * -2.5;
+      const gloveLift = Math.sin(keeper.runCycle) * 4;
+
+      ctx.save();
+      ctx.translate(keeper.x, keeper.y + bob);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
+      ctx.beginPath();
+      ctx.ellipse(0, 16 - bob, 13, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-4, 6);
+      ctx.lineTo(-5, 14);
+      ctx.moveTo(4, 6);
+      ctx.lineTo(5, 14);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-9, -4);
+      ctx.lineTo(-14, -10 + gloveLift);
+      ctx.moveTo(9, -4);
+      ctx.lineTo(14, -10 - gloveLift);
+      ctx.stroke();
+
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(-14, -10 + gloveLift, 4, 0, Math.PI * 2);
+      ctx.arc(14, -10 - gloveLift, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.roundRect(-10, -7, 20, 14, 5);
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -13, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.arc(0, -14.5, 8.2, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-3, -12.5, 1.3, 0, Math.PI * 2);
+      ctx.arc(1.5, -12.5, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawPlayersAndBall() {
+      for (const d of defenders) {
+        drawDefenderAvatar(d);
+      }
+
+      drawKeeperAvatar();
+
+      const bob = Math.abs(Math.sin(messi.walkCycle)) * -3;
+      ctx.save();
+      ctx.translate(messi.x, messi.y + bob);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 14 - bob, 13, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(-4, 5);
+      ctx.lineTo(-4 + Math.sin(messi.walkCycle) * 5, 13);
+      ctx.moveTo(4, 5);
+      ctx.lineTo(4 - Math.sin(messi.walkCycle) * 5, 13);
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.roundRect(-10, -7, 20, 14, 5);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-3.5, -6, 7, 12);
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -13, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.arc(0, -14.5, 8.2, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = '800 9px "Space Mono", monospace';
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.fillText('10', 0, 3);
+
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#0f172a';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function loop() {
+      animTime += 0.02;
+      updateMessi();
+      drawPitch();
+      drawPlayersAndBall();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (!matchStarted) return;
+      const k = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', ' '].includes(k)) {
+        e.preventDefault();
+      }
+      if (k === 'arrowup' || k === 'w') keys.up = true;
+      if (k === 'arrowdown' || k === 's') keys.down = true;
+      if (k === 'arrowleft' || k === 'a') keys.left = true;
+      if (k === 'arrowright' || k === 'd') keys.right = true;
+      if (e.code === 'Space') shootBall();
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'arrowup' || k === 'w') keys.up = false;
+      if (k === 'arrowdown' || k === 's') keys.down = false;
+      if (k === 'arrowleft' || k === 'a') keys.left = false;
+      if (k === 'arrowright' || k === 'd') keys.right = false;
+    });
+
+    document.querySelectorAll('.dpad-btn').forEach(btn => {
+      const dir = btn.dataset.dir;
+      const press = (e) => {
+        if (!matchStarted) return;
+        e.preventDefault();
+        keys[dir] = true;
+        btn.classList.add('pressed');
+      };
+      const release = () => {
+        keys[dir] = false;
+        btn.classList.remove('pressed');
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointerleave', release);
+      btn.addEventListener('pointercancel', release);
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (!matchStarted) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const tx = (e.clientX - rect.left) * scaleX;
+      const ty = (e.clientY - rect.top) * scaleY;
+      shootBall(tx, ty);
+    });
+
+    resetMatch(false);
+    loop();
+  </script>
+
+  <script src="musica.js"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@
       --muted: #cbd5e1;
     }
 
-    * {
+    *, *::before, *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -608,16 +608,6 @@
       color: var(--green-bright);
     }
 
-    #yt-box {
-      position: fixed;
-      width: 1px;
-      height: 1px;
-      opacity: 0.01;
-      pointer-events: none;
-      bottom: 0;
-      left: 0;
-    }
-
     /* Ajustes específicos para iPhone y pantallas pequeñas */
     @media (max-width: 600px) {
       .navbar {
@@ -731,9 +721,9 @@
       </a>
       <nav class="nav-links">
         <a href="index.html" class="active">Inicio</a>
-        <a href="onepiece.html">One Piece</a>
+        <a href="One.html">One Piece</a>
         <a href="messi.html">Messi</a>
-        <a href="arquitectura.html">Arquitectura</a>
+        <a href="arqui.html">Arquitectura</a>
       </nav>
     </div>
   </header>
@@ -760,22 +750,21 @@
 
       <div class="actions-row">
         <button class="btn-glow" onclick="popConfetti()">🎊 Más confeti</button>
-        <a href="onepiece.html" class="btn-secondary-link">Ir a la siguiente página →</a>
+        <a href="One.html" class="btn-secondary-link">Ir a la siguiente página →</a>
       </div>
     </section>
   </main>
 
   <!-- Control de música -->
   <div class="audio-bar">
-    <button class="audio-btn" id="audioToggle" onclick="toggleAudio()">❚❚</button>
+    <button class="audio-btn" id="audioToggle" onclick="toggleAudio()">▶</button>
     <div class="audio-meta">
       <strong>Sorpresa musical</strong>
-      <span id="audioState" style="color: #cbd5e1;">Sonando</span>
+      <span id="audioState" style="color: #cbd5e1;">Listo</span>
     </div>
   </div>
 
-  <audio id="localAudio" src="cepillin.mp3" loop></audio>
-  <div id="yt-box"><div id="yt-player"></div></div>
+  <audio id="bgMusic" src="Mananitas.mp3" preload="auto" loop></audio>
 
   <script>
     function popConfetti() {
@@ -834,79 +823,17 @@
       setInterval(triggerMessiPeek, 7000);
     }
 
-    // 3. Audio (cepillin.mp3 local o respaldo YouTube)
-    const localAudio = document.getElementById('localAudio');
-    let useLocal = false;
-    let ytPlayer = null;
-    let ytReady = false;
-    let playing = false;
-
-    localAudio.addEventListener('canplaythrough', () => {
-      useLocal = true;
-    });
-
-    const ytScript = document.createElement('script');
-    ytScript.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(ytScript);
-
-    function onYouTubeIframeAPIReady() {
-      ytPlayer = new YT.Player('yt-player', {
-        height: '1',
-        width: '1',
-        videoId: 'f4p_wL-4h20',
-        playerVars: {
-          autoplay: 0,
-          loop: 1,
-          playlist: 'f4p_wL-4h20'
-        },
-        events: {
-          onReady: () => { ytReady = true; }
-        }
-      });
-    }
-
-    function playSong() {
-      playing = true;
-      document.getElementById('audioToggle').textContent = '❚❚';
-      document.getElementById('audioState').textContent = 'Sonando';
-
-      if (useLocal) {
-        localAudio.play().catch(() => {});
-      } else if (ytReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
-        ytPlayer.setVolume(100);
-        ytPlayer.playVideo();
-      } else {
-        setTimeout(() => {
-          if (playing && ytReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
-            ytPlayer.setVolume(100);
-            ytPlayer.playVideo();
-          }
-        }, 1200);
-      }
-    }
-
-    function pauseSong() {
-      playing = false;
-      document.getElementById('audioToggle').textContent = '▶';
-      document.getElementById('audioState').textContent = 'Pausado';
-      localAudio.pause();
-      if (ytReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-        ytPlayer.pauseVideo();
-      }
-    }
-
-    function toggleAudio() {
-      if (playing) pauseSong();
-      else playSong();
-    }
-
     function enterSite() {
       document.getElementById('intro-screen').classList.add('hide');
       popConfetti();
       setTimeout(popConfetti, 500);
-      playSong();
+      if (typeof window.playSong === 'function') {
+        window.playSong();
+      }
       startMessiCameos();
     }
   </script>
+
+  <script src="musica.js"></script>
 </body>
 </html>

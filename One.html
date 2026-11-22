@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>One Piece • Jeremy Ríos Ríos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020b12;
+      --green-main: #10b981;
+      --green-bright: #34d399;
+      --blue-main: #0ea5e9;
+      --blue-bright: #38bdf8;
+      --gold: #fbbf24;
+      --border: rgba(52, 211, 153, 0.55);
+      --text: #f0fdf4;
+      --muted: #cbd5e1;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.34), transparent 42%),
+        radial-gradient(circle at 86% 82%, rgba(14, 165, 233, 0.36), transparent 46%),
+        radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.2), transparent 65%),
+        linear-gradient(145deg, #01080e 0%, #051c2c 50%, #032524 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .blueprint-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.12) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: 0;
+      animation: panGrid 26s linear infinite;
+    }
+
+    @keyframes panGrid {
+      0% { background-position: 0 0; }
+      100% { background-position: 68px 68px; }
+    }
+
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.48;
+      animation: driftOrb 13s ease-in-out infinite alternate;
+    }
+
+    .orb-green {
+      width: 340px;
+      height: 340px;
+      background: #10b981;
+      top: 8%;
+      left: -60px;
+    }
+
+    .orb-blue {
+      width: 370px;
+      height: 370px;
+      background: #0ea5e9;
+      bottom: 8%;
+      right: -70px;
+      animation-delay: -6s;
+    }
+
+    @keyframes driftOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(45px, -35px) scale(1.14); }
+    }
+
+    /* Capa de mensajes flotantes en cualquier lado de la pantalla */
+    .toast-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 95;
+      overflow: hidden;
+    }
+
+    .floating-popup {
+      position: fixed;
+      max-width: min(320px, 84vw);
+      padding: 0.85rem 1.25rem;
+      border-radius: 18px;
+      font-weight: 800;
+      font-size: clamp(1rem, 2.5vw, 1.22rem);
+      letter-spacing: 0.4px;
+      text-align: center;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transform: scale(0.85) translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .floating-popup.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .floating-popup.mistake {
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.95), rgba(153, 27, 27, 0.95));
+      border: 2px solid #fca5a5;
+      color: #fef2f2;
+    }
+
+    .floating-popup.celebrate {
+      background: linear-gradient(135deg, rgba(6, 78, 59, 0.96), rgba(3, 105, 161, 0.96));
+      border: 2px solid var(--gold);
+      color: #fef08a;
+    }
+
+    /* Barra de navegación de ancho completo */
+    .navbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background: linear-gradient(90deg, rgba(4, 24, 36, 0.88), rgba(5, 34, 42, 0.88), rgba(4, 24, 36, 0.88));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      padding: calc(0.75rem + env(safe-area-inset-top)) 2rem 0.75rem;
+    }
+
+    .navbar::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+      opacity: 0.75;
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.6px;
+      text-decoration: none;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-bright);
+      animation: dotPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.65; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .nav-links a {
+      position: relative;
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      transition: color 0.22s ease, background 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-links a.active {
+      color: #fff;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .nav-links a.active::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      box-shadow: 0 0 10px var(--green-bright);
+    }
+
+    /* Escenario principal */
+    .stage {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      max-width: 1020px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.15rem 1rem calc(4.8rem + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .game-shell {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.14), rgba(5, 24, 36, 0.78), rgba(14, 165, 233, 0.16));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 1.3rem 1.45rem 1.45rem;
+      box-shadow:
+        0 22px 52px rgba(0, 0, 0, 0.6),
+        0 0 38px rgba(16, 185, 129, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      animation: fadeUp 0.55s ease both;
+    }
+
+    .game-shell::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+
+    .game-title {
+      font-size: clamp(1.25rem, 2.9vw, 1.7rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-chip {
+      background: rgba(3, 18, 28, 0.86);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 0.4rem 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+    }
+
+    .hud-chip strong {
+      color: var(--green-bright);
+    }
+
+    .map-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.55rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .map-badge {
+      background: rgba(3, 18, 28, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
+      padding: 0.5rem 0.7rem;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      transition: all 0.25s ease;
+    }
+
+    .map-badge.current {
+      border-color: var(--blue-bright);
+      background: rgba(14, 165, 233, 0.16);
+      color: #f0f9ff;
+    }
+
+    .map-badge.completed {
+      border-color: var(--green-bright);
+      background: rgba(16, 185, 129, 0.16);
+      color: #d1fae5;
+    }
+
+    .map-badge strong {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--green-bright);
+      margin-bottom: 0.12rem;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1.5px solid rgba(56, 189, 248, 0.42);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      background: #031926;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+
+    .status-note {
+      margin-top: 0.8rem;
+      background: rgba(3, 20, 32, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-left: 4px solid var(--blue-bright);
+      border-radius: 12px;
+      padding: 0.65rem 0.95rem;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+    }
+
+    .win-banner {
+      display: none;
+      margin-top: 0.85rem;
+      background: linear-gradient(90deg, rgba(251, 191, 36, 0.22), rgba(16, 185, 129, 0.24));
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      padding: 0.95rem 1.15rem;
+      color: #fef9c3;
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .win-banner.show {
+      display: block;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .controls-footer {
+      margin-top: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .key-hint {
+      font-size: 0.86rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    kbd {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.76rem;
+      background: rgba(2, 16, 26, 0.9);
+      border: 1px solid rgba(52, 211, 153, 0.5);
+      color: var(--green-bright);
+      padding: 0.18rem 0.48rem;
+      border-radius: 7px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 42px);
+      grid-template-rows: repeat(2, 38px);
+      gap: 0.3rem;
+    }
+
+    .dpad-btn {
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #f0fdf4;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dpad-btn:active,
+    .dpad-btn.pressed {
+      transform: scale(0.94);
+      background: rgba(16, 185, 129, 0.4);
+      border-color: var(--green-bright);
+    }
+
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+
+    .action-btns {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-glow {
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.88rem;
+      border: none;
+      padding: 0.68rem 1.25rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-next {
+      text-decoration: none;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid var(--blue-bright);
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 0.68rem 1.2rem;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-next:hover {
+      background: rgba(16, 185, 129, 0.26);
+      border-color: var(--green-bright);
+      color: #fff;
+    }
+
+    /* Barra flotante de audio */
+    .audio-bar {
+      position: fixed;
+      bottom: calc(0.85rem + env(safe-area-inset-bottom));
+      right: 0.9rem;
+      z-index: 80;
+      background: rgba(3, 20, 30, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--green-bright);
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 18px rgba(16, 185, 129, 0.22);
+    }
+
+    .audio-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.78rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .audio-meta {
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .audio-meta strong {
+      display: block;
+      color: var(--green-bright);
+    }
+
+    @media (max-width: 820px) {
+      .map-steps {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: calc(0.6rem + env(safe-area-inset-top)) 0.8rem 0.6rem;
+      }
+
+      .nav-inner {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .brand {
+        font-size: 0.86rem;
+      }
+
+      .nav-links {
+        gap: 0.15rem;
+      }
+
+      .nav-links a {
+        font-size: 0.78rem;
+        padding: 0.32rem 0.6rem;
+      }
+
+      .stage {
+        padding: 0.85rem 0.75rem calc(5rem + env(safe-area-inset-bottom));
+      }
+
+      .game-shell {
+        padding: 1rem 0.9rem 1.15rem;
+        border-radius: 22px;
+      }
+
+      canvas {
+        aspect-ratio: 4 / 3;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blueprint-grid"></div>
+  <div class="ambient-orb orb-green"></div>
+  <div class="ambient-orb orb-blue"></div>
+
+  <!-- Contenedor de mensajes emergentes en cualquier lado de la pantalla -->
+  <div class="toast-layer" id="toastLayer"></div>
+
+  <!-- Barra de navegación de ancho completo -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-dot"></span>
+        JEREMY • RÍOS RÍOS
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="One.html" class="active">One Piece</a>
+        <a href="messi.html">Messi</a>
+        <a href="arqui.html">Arquitectura</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="game-shell">
+      <div class="top-bar">
+        <h1 class="game-title" id="mapTitle">🏴‍☠️ Mapa 1: Isla de la Carne</h1>
+        <div class="hud-group">
+          <div class="hud-chip">Mapa: <strong id="mapCounter">1 / 4</strong></div>
+          <div class="hud-chip">Meta: <strong id="goalCounter">0 / 3</strong></div>
+          <div class="hud-chip">Toques: <strong id="hitsCounter">0</strong></div>
+        </div>
+      </div>
+
+      <div class="map-steps">
+        <div class="map-badge current" id="step1">
+          <strong>MAPA 1</strong>
+          3 carnes 🍖 para abrir portal
+        </div>
+        <div class="map-badge" id="step2">
+          <strong>MAPA 2</strong>
+          3 interruptores 🔵 para abrir portal
+        </div>
+        <div class="map-badge" id="step3">
+          <strong>MAPA 3</strong>
+          2 estrellas ⭐ + botón 🟡
+        </div>
+        <div class="map-badge" id="step4">
+          <strong>MAPA 4</strong>
+          Botón 🟢 + llegar al cofre 👑
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="islandCanvas" width="800" height="500"></canvas>
+      </div>
+
+      <div class="status-note" id="statusNote">
+        <strong>Mapa 1:</strong> Recoge las <strong>3 piezas de carne 🍖</strong> esquivando las patrullas para abrir la barrera y entrar al portal 🌀.
+      </div>
+
+      <div class="win-banner" id="winBanner">
+        👑 <strong>¡Completaste los 4 mapas y abriste el cofre, Jeremy!</strong> ¡Feliz cumpleaños!
+      </div>
+
+      <div class="controls-footer">
+        <div class="key-hint">
+          Muévete con <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> o <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+        </div>
+
+        <div class="dpad" aria-label="Controles de desplazamiento">
+          <button class="dpad-btn dpad-up" data-dir="up">↑</button>
+          <button class="dpad-btn dpad-left" data-dir="left">←</button>
+          <button class="dpad-btn dpad-down" data-dir="down">↓</button>
+          <button class="dpad-btn dpad-right" data-dir="right">→</button>
+        </div>
+
+        <div class="action-btns">
+          <button class="btn-glow" onclick="restartCurrentMap()">🔄 Reiniciar mapa</button>
+          <button class="btn-glow" onclick="startFromMap1()">⏮️ Volver al Mapa 1</button>
+          <a href="messi.html" class="btn-next">Siguiente: Messi →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Control de música -->
+  <div class="audio-bar">
+    <button class="audio-btn" id="audioToggle" type="button" onclick="toggleAudio()">▶</button>
+    <div class="audio-meta">
+      <strong>Sorpresa musical</strong>
+      <span id="audioState" style="color: #cbd5e1;">Toca para oír</span>
+    </div>
+  </div>
+
+  <audio id="bgMusic" src="Mananitas.mp3" preload="auto" loop></audio>
+
+  <script>
+    const toastLayer = document.getElementById('toastLayer');
+    let mistakeCooldown = 0;
+
+    // Los 3 mensajes para cuando se equivoca (sale 1 distinto cada vez)
+    const mistakeMessages = [
+      '¡QUE MENSO!',
+      '¡AJAJA TODO BABOSO!',
+      '¡SE EQUIVOCO JAJAJ!'
+    ];
+    let lastMistakeIndex = -1;
+
+    // Los 3 mensajes para cuando termina cada mapa (sale 1 distinto cada vez)
+    const mapWinMessages = [
+      '¡LOBA LOBA!',
+      '¡APOCO SI MI LEONA!',
+      '¡QUE DIVA!'
+    ];
+    let lastMapWinIndex = -1;
+
+    function getNextDistinctIndex(listLength, lastIdx) {
+      if (listLength <= 1) return 0;
+      let idx = Math.floor(Math.random() * listLength);
+      if (idx === lastIdx) {
+        idx = (idx + 1) % listLength;
+      }
+      return idx;
+    }
+
+    function spawnPopupAtRandomSpot(text, variantClass, durationMs = 3000) {
+      const el = document.createElement('div');
+      el.className = `floating-popup ${variantClass}`;
+      el.textContent = text;
+      toastLayer.appendChild(el);
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const rect = el.getBoundingClientRect();
+      const maxX = Math.max(16, vw - rect.width - 24);
+      const maxY = Math.max(80, vh - rect.height - 80);
+      const randX = 16 + Math.random() * maxX;
+      const randY = 76 + Math.random() * maxY;
+
+      el.style.left = `${randX}px`;
+      el.style.top = `${randY}px`;
+
+      requestAnimationFrame(() => {
+        el.classList.add('visible');
+      });
+
+      setTimeout(() => {
+        el.classList.remove('visible');
+        setTimeout(() => el.remove(), 260);
+      }, durationMs);
+    }
+
+    // Sale 1 mensaje distinto cada vez que se equivoca, durante 3 segundos
+    function triggerMistakePopup() {
+      if (mistakeCooldown > 0) return;
+      mistakeCooldown = 28;
+      lastMistakeIndex = getNextDistinctIndex(mistakeMessages.length, lastMistakeIndex);
+      spawnPopupAtRandomSpot(mistakeMessages[lastMistakeIndex], 'mistake', 3000);
+    }
+
+    // Sale 1 mensaje distinto cada vez que termina un mapa, durante 3 segundos
+    function triggerMapCompletePopup() {
+      lastMapWinIndex = getNextDistinctIndex(mapWinMessages.length, lastMapWinIndex);
+      spawnPopupAtRandomSpot(mapWinMessages[lastMapWinIndex], 'celebrate', 3000);
+    }
+
+    const canvas = document.getElementById('islandCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const keys = { up: false, down: false, left: false, right: false };
+    let animTime = 0;
+    let currentMapIndex = 0;
+    let won = false;
+    let hits = 0;
+
+    const player = {
+      x: 155,
+      y: 250,
+      radius: 13,
+      speed: 2.95,
+      facing: 1,
+      walkCycle: 0
+    };
+
+    const mapsConfig = [
+      {
+        title: '🏴‍☠️ Mapa 1: Isla de la Carne',
+        islandColor1: '#059669',
+        islandColor2: '#047857',
+        start: { x: 155, y: 250 },
+        portal: { x: 635, y: 250, r: 22 },
+        treasure: null,
+        barrier: { x: 545, y: 125, w: 16, h: 250 },
+        collectibles: [
+          { kind: 'meat', icon: '🍖', x: 255, y: 165, done: false },
+          { kind: 'meat', icon: '🍖', x: 375, y: 335, done: false },
+          { kind: 'meat', icon: '🍖', x: 475, y: 185, done: false }
+        ],
+        switches: [],
+        obstacles: [
+          { type: 'wall', x: 220, y: 215, w: 20, h: 95 },
+          { type: 'rock', x: 315, y: 165, r: 21 },
+          { type: 'palm', x: 325, y: 330, r: 19 },
+          { type: 'wall', x: 420, y: 150, w: 20, h: 95 },
+          { type: 'rock', x: 485, y: 325, r: 21 }
+        ],
+        patrols: [
+          { x: 275, y: 170, r: 12, minY: 160, maxY: 340, vy: 1.85, color: '#ef4444' },
+          { x: 455, y: 330, r: 12, minY: 160, maxY: 340, vy: -2.05, color: '#f97316' }
+        ],
+        introText: '<strong>Mapa 1:</strong> Recoge las <strong>3 carnes 🍖</strong> esquivando las patrullas para abrir la barrera hacia el portal 🌀.'
+      },
+      {
+        title: '🗿 Mapa 2: Isla de las Ruinas',
+        islandColor1: '#0f766e',
+        islandColor2: '#115e59',
+        start: { x: 155, y: 250 },
+        portal: { x: 640, y: 250, r: 22 },
+        treasure: null,
+        barrier: { x: 555, y: 125, w: 16, h: 250 },
+        collectibles: [],
+        switches: [
+          { x: 245, y: 165, r: 14, color: '#38bdf8', active: false },
+          { x: 365, y: 335, r: 14, color: '#38bdf8', active: false },
+          { x: 485, y: 165, r: 14, color: '#38bdf8', active: false }
+        ],
+        obstacles: [
+          { type: 'wall', x: 205, y: 145, w: 18, h: 80 },
+          { type: 'wall', x: 295, y: 265, w: 18, h: 95 },
+          { type: 'rock', x: 305, y: 175, r: 22 },
+          { type: 'wall', x: 415, y: 145, w: 18, h: 90 },
+          { type: 'rock', x: 435, y: 325, r: 22 },
+          { type: 'palm', x: 510, y: 250, r: 19 }
+        ],
+        patrols: [
+          { x: 255, y: 250, r: 12, minY: 155, maxY: 345, vy: 2.25, color: '#ef4444' },
+          { x: 375, y: 175, r: 12, minY: 155, maxY: 345, vy: -2.35, color: '#f97316' },
+          { x: 485, y: 325, r: 12, minY: 160, maxY: 340, vy: 2.15, color: '#ef4444' }
+        ],
+        introText: '<strong>Mapa 2:</strong> Activa los <strong>3 interruptores azules 🔵</strong> sin que te toquen las patrullas para abrir el portal 🌀.'
+      },
+      {
+        title: '🌋 Mapa 3: Isla del Acantilado',
+        islandColor1: '#047857',
+        islandColor2: '#064e3b',
+        start: { x: 150, y: 250 },
+        portal: { x: 640, y: 250, r: 22 },
+        treasure: null,
+        barrier: { x: 560, y: 125, w: 16, h: 250 },
+        collectibles: [
+          { kind: 'star', icon: '⭐', x: 265, y: 335, done: false },
+          { kind: 'star', icon: '⭐', x: 425, y: 165, done: false }
+        ],
+        switches: [
+          { x: 515, y: 330, r: 14, color: '#fbbf24', active: false, needsCollectibles: true }
+        ],
+        obstacles: [
+          { type: 'wall', x: 205, y: 210, w: 20, h: 115 },
+          { type: 'wall', x: 315, y: 135, w: 20, h: 110 },
+          { type: 'rock', x: 345, y: 325, r: 22 },
+          { type: 'wall', x: 465, y: 225, w: 20, h: 115 },
+          { type: 'palm', x: 495, y: 165, r: 19 }
+        ],
+        patrols: [
+          { x: 265, y: 170, r: 12, minY: 155, maxY: 345, vy: 2.5, color: '#ef4444' },
+          { x: 385, y: 325, r: 12, minY: 155, maxY: 345, vy: -2.6, color: '#f97316' },
+          { x: 515, y: 185, r: 12, minY: 155, maxY: 310, vy: 2.4, color: '#ef4444' }
+        ],
+        introText: '<strong>Mapa 3:</strong> Toma las <strong>2 estrellas ⭐</strong> y luego pisa el <strong>interruptor dorado 🟡</strong> para abrir el paso al Mapa 4.'
+      },
+      {
+        title: '👑 Mapa 4: Santuario del Tesoro',
+        islandColor1: '#065f46',
+        islandColor2: '#022c22',
+        start: { x: 150, y: 250 },
+        portal: null,
+        treasure: { x: 645, y: 250, size: 32 },
+        barrier: { x: 555, y: 125, w: 16, h: 250 },
+        collectibles: [],
+        switches: [
+          { x: 465, y: 170, r: 14, color: '#34d399', active: false, needsCollectibles: false }
+        ],
+        obstacles: [
+          { type: 'wall', x: 210, y: 140, w: 20, h: 95 },
+          { type: 'wall', x: 210, y: 265, w: 20, h: 95 },
+          { type: 'rock', x: 315, y: 250, r: 24 },
+          { type: 'wall', x: 395, y: 220, w: 20, h: 120 },
+          { type: 'palm', x: 505, y: 330, r: 19 }
+        ],
+        patrols: [
+          { x: 265, y: 175, r: 12, minY: 155, maxY: 345, vy: 2.65, color: '#ef4444' },
+          { x: 355, y: 325, r: 12, minY: 155, maxY: 345, vy: -2.75, color: '#f97316' },
+          { x: 515, y: 175, r: 12, minY: 155, maxY: 345, vy: 2.8, color: '#ef4444' }
+        ],
+        introText: '<strong>Mapa 4:</strong> Activa el <strong>interruptor verde 🟢</strong> para abrir la barrera final y llegar al <strong>cofre 👑</strong>.'
+      }
+    ];
+
+    let activeMap = null;
+    let barrierOpen = false;
+    let mapGoalCelebrated = false;
+
+    function loadMap(idx) {
+      currentMapIndex = idx;
+      const cfg = mapsConfig[idx];
+      won = false;
+      barrierOpen = false;
+      mapGoalCelebrated = false;
+
+      activeMap = {
+        title: cfg.title,
+        islandColor1: cfg.islandColor1,
+        islandColor2: cfg.islandColor2,
+        start: { ...cfg.start },
+        portal: cfg.portal ? { ...cfg.portal } : null,
+        treasure: cfg.treasure ? { ...cfg.treasure } : null,
+        barrier: cfg.barrier ? { ...cfg.barrier } : null,
+        collectibles: cfg.collectibles.map(c => ({ ...c })),
+        switches: cfg.switches.map(s => ({ ...s })),
+        obstacles: cfg.obstacles.map(o => ({ ...o })),
+        patrols: cfg.patrols.map(p => ({ ...p })),
+        introText: cfg.introText
+      };
+
+      player.x = activeMap.start.x;
+      player.y = activeMap.start.y;
+      player.walkCycle = 0;
+
+      document.getElementById('mapTitle').textContent = activeMap.title;
+      document.getElementById('mapCounter').textContent = `${idx + 1} / 4`;
+      document.getElementById('winBanner').classList.remove('show');
+      setNote(activeMap.introText);
+      updateHUD();
+    }
+
+    function restartCurrentMap() {
+      loadMap(currentMapIndex);
+    }
+
+    function startFromMap1() {
+      hits = 0;
+      document.getElementById('hitsCounter').textContent = hits;
+      loadMap(0);
+    }
+
+    function setNote(html) {
+      document.getElementById('statusNote').innerHTML = html;
+    }
+
+    function updateHUD() {
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById(`step${i + 1}`);
+        el.className = 'map-badge';
+        if (i < currentMapIndex || (i === 3 && won)) {
+          el.classList.add('completed');
+        } else if (i === currentMapIndex) {
+          el.classList.add('current');
+        }
+      }
+
+      if (currentMapIndex === 0) {
+        const done = activeMap.collectibles.filter(c => c.done).length;
+        document.getElementById('goalCounter').textContent = `${done} / ${activeMap.collectibles.length}`;
+      } else if (currentMapIndex === 1) {
+        const done = activeMap.switches.filter(s => s.active).length;
+        document.getElementById('goalCounter').textContent = `${done} / ${activeMap.switches.length}`;
+      } else if (currentMapIndex === 2) {
+        const stars = activeMap.collectibles.filter(c => c.done).length;
+        const sw = activeMap.switches[0].active ? 1 : 0;
+        document.getElementById('goalCounter').textContent = `${stars + sw} / 3`;
+      } else {
+        const sw = activeMap.switches[0].active ? 1 : 0;
+        const tr = won ? 1 : 0;
+        document.getElementById('goalCounter').textContent = `${sw + tr} / 2`;
+      }
+    }
+
+    function isOnIsland(cx, cy, margin = 14) {
+      const dx = (cx - 400) / (305 - margin);
+      const dy = (cy - 250) / (178 - margin);
+      const angle = Math.atan2(cy - 250, cx - 400);
+      const wave = 1 + 0.08 * Math.sin(angle * 4 + currentMapIndex) + 0.04 * Math.cos(angle * 2);
+      return (dx * dx + dy * dy) <= wave * wave;
+    }
+
+    function collidesObstacleOrBarrier(nx, ny, r) {
+      for (const obs of activeMap.obstacles) {
+        if (obs.type === 'wall') {
+          const cx = Math.max(obs.x, Math.min(nx, obs.x + obs.w));
+          const cy = Math.max(obs.y, Math.min(ny, obs.y + obs.h));
+          if (Math.hypot(nx - cx, ny - cy) < r - 2) return true;
+        } else {
+          if (Math.hypot(nx - obs.x, ny - obs.y) < r + obs.r - 3) return true;
+        }
+      }
+
+      if (!barrierOpen && activeMap.barrier) {
+        const b = activeMap.barrier;
+        const cx = Math.max(b.x, Math.min(nx, b.x + b.w));
+        const cy = Math.max(b.y, Math.min(ny, b.y + b.h));
+        if (Math.hypot(nx - cx, ny - cy) < r - 1) return true;
+      }
+
+      return false;
+    }
+
+    function unlockCurrentBarrier(messageHtml, celebrateNow = true) {
+      barrierOpen = true;
+      if (celebrateNow && !mapGoalCelebrated) {
+        mapGoalCelebrated = true;
+        triggerMapCompletePopup();
+      }
+      setNote(messageHtml);
+    }
+
+    function checkMapProgress() {
+      for (const item of activeMap.collectibles) {
+        if (!item.done && Math.hypot(player.x - item.x, player.y - item.y) < player.radius + 14) {
+          item.done = true;
+          updateHUD();
+
+          if (currentMapIndex === 0 && activeMap.collectibles.every(c => c.done)) {
+            unlockCurrentBarrier('🍖 ¡Las 3 carnes listas! La barrera se abrió: cruza al <strong>portal 🌀</strong> para pasar al Mapa 2.', true);
+          } else if (currentMapIndex === 2 && activeMap.collectibles.every(c => c.done)) {
+            setNote('⭐ ¡Las 2 estrellas listas! Ahora pisa el <strong>interruptor dorado 🟡</strong> para abrir la barrera.');
+          }
+        }
+      }
+
+      for (const sw of activeMap.switches) {
+        if (!sw.active && Math.hypot(player.x - sw.x, player.y - sw.y) < player.radius + sw.r) {
+          if (sw.needsCollectibles && !activeMap.collectibles.every(c => c.done)) {
+            triggerMistakePopup();
+            setNote('⚠️ Primero recoge las <strong>2 estrellas ⭐</strong> antes de activar el interruptor dorado.');
+            continue;
+          }
+          sw.active = true;
+          updateHUD();
+
+          if (currentMapIndex === 1 && activeMap.switches.every(s => s.active)) {
+            unlockCurrentBarrier('🔵 ¡Los 3 interruptores activados! Entra al <strong>portal 🌀</strong> para pasar al Mapa 3.', true);
+          } else if (currentMapIndex === 2 && sw.active) {
+            unlockCurrentBarrier('🟡 ¡Interruptor dorado activado! Ve hacia el <strong>portal 🌀</strong> para pasar al Mapa 4.', true);
+          } else if (currentMapIndex === 3 && sw.active) {
+            unlockCurrentBarrier('🟢 ¡Barrera final abierta! Corre hacia el <strong>cofre 👑</strong> para ganar.', false);
+          }
+        }
+      }
+
+      if (barrierOpen && activeMap.portal && Math.hypot(player.x - activeMap.portal.x, player.y - activeMap.portal.y) < player.radius + activeMap.portal.r) {
+        loadMap(currentMapIndex + 1);
+        return;
+      }
+
+      if (barrierOpen && activeMap.treasure && !won && Math.hypot(player.x - activeMap.treasure.x, player.y - activeMap.treasure.y) < player.radius + activeMap.treasure.size * 0.65) {
+        won = true;
+        updateHUD();
+        triggerMapCompletePopup();
+        document.getElementById('winBanner').classList.add('show');
+        setNote('🎉 ¡Encontraste el cofre tras superar los 4 mapas! ¡Feliz cumpleaños, Jeremy!');
+        confetti({
+          particleCount: 150,
+          spread: 90,
+          origin: { y: 0.6 },
+          colors: ['#fbbf24', '#10b981', '#34d399', '#38bdf8', '#ffffff']
+        });
+      }
+    }
+
+    function updatePatrols() {
+      for (const p of activeMap.patrols) {
+        p.y += p.vy;
+        if (p.y <= p.minY || p.y >= p.maxY) {
+          p.vy *= -1;
+        }
+
+        if (!won && Math.hypot(player.x - p.x, player.y - p.y) < player.radius + p.r - 2) {
+          hits++;
+          document.getElementById('hitsCounter').textContent = hits;
+          player.x = activeMap.start.x;
+          player.y = activeMap.start.y;
+          triggerMistakePopup();
+          setNote('💥 ¡Te tocó una patrulla! Regresaste al inicio de este mapa.');
+        }
+      }
+    }
+
+    function updatePlayer() {
+      if (mistakeCooldown > 0) mistakeCooldown--;
+      if (won) return;
+
+      let vx = 0;
+      let vy = 0;
+      if (keys.left) vx -= 1;
+      if (keys.right) vx += 1;
+      if (keys.up) vy -= 1;
+      if (keys.down) vy += 1;
+
+      if (vx !== 0 && vy !== 0) {
+        const inv = 1 / Math.SQRT2;
+        vx *= inv;
+        vy *= inv;
+      }
+
+      if (vx !== 0) {
+        player.facing = vx > 0 ? 1 : -1;
+      }
+
+      if (vx !== 0 || vy !== 0) {
+        const nextX = player.x + vx * player.speed;
+        const nextY = player.y + vy * player.speed;
+
+        if (isOnIsland(nextX, player.y, player.radius) && !collidesObstacleOrBarrier(nextX, player.y, player.radius)) {
+          player.x = nextX;
+        }
+        if (isOnIsland(player.x, nextY, player.radius) && !collidesObstacleOrBarrier(player.x, nextY, player.radius)) {
+          player.y = nextY;
+        }
+        player.walkCycle += 0.22;
+      } else {
+        player.walkCycle = 0;
+      }
+
+      checkMapProgress();
+      updatePatrols();
+    }
+
+    function drawMapBackground() {
+      const seaGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      seaGrad.addColorStop(0, '#04293d');
+      seaGrad.addColorStop(1, '#021522');
+      ctx.fillStyle = seaGrad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 9; i++) {
+        const yBase = 42 + i * 52;
+        ctx.beginPath();
+        for (let x = 0; x <= canvas.width; x += 20) {
+          const wy = yBase + Math.sin(x * 0.025 + animTime * 2 + i) * 5;
+          if (x === 0) ctx.moveTo(x, wy);
+          else ctx.lineTo(x, wy);
+        }
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      const samples = 110;
+      for (let i = 0; i <= samples; i++) {
+        const angle = (i / samples) * Math.PI * 2;
+        const wave = 1 + 0.08 * Math.sin(angle * 4 + currentMapIndex) + 0.04 * Math.cos(angle * 2);
+        const px = 400 + Math.cos(angle) * (305 * wave);
+        const py = 250 + Math.sin(angle) * (178 * wave);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.35)';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      const sandGrad = ctx.createRadialGradient(400, 245, 35, 400, 250, 320);
+      sandGrad.addColorStop(0, '#fde68a');
+      sandGrad.addColorStop(0.75, '#f59e0b');
+      sandGrad.addColorStop(1, '#d97706');
+      ctx.fillStyle = sandGrad;
+      ctx.fill();
+      ctx.clip();
+
+      const landGrad = ctx.createLinearGradient(120, 90, 680, 410);
+      landGrad.addColorStop(0, activeMap.islandColor1);
+      landGrad.addColorStop(1, activeMap.islandColor2);
+      ctx.fillStyle = landGrad;
+      ctx.fillRect(80, 60, 640, 380);
+      ctx.restore();
+    }
+
+    function drawElements() {
+      for (const item of activeMap.collectibles) {
+        if (item.done) continue;
+        ctx.font = '21px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.icon, item.x, item.y + Math.sin(animTime * 4 + item.x) * 2.5);
+      }
+
+      for (const sw of activeMap.switches) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+        ctx.fillStyle = sw.active ? sw.color : 'rgba(15, 23, 42, 0.85)';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = sw.color;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.r * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = sw.active ? '#ffffff' : sw.color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (!barrierOpen && activeMap.barrier) {
+        const b = activeMap.barrier;
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.88)';
+        ctx.strokeStyle = '#fecaca';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(b.x, b.y, b.w, b.h, 5);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      if (activeMap.portal) {
+        const p = activeMap.portal;
+        const pulse = Math.sin(animTime * 5) * 3;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r + pulse, 0, Math.PI * 2);
+        ctx.fillStyle = barrierOpen ? 'rgba(56, 189, 248, 0.35)' : 'rgba(100, 116, 139, 0.25)';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = barrierOpen ? '#38bdf8' : '#64748b';
+        ctx.stroke();
+
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🌀', p.x, p.y);
+        ctx.restore();
+      }
+
+      if (activeMap.treasure) {
+        const { x, y, size } = activeMap.treasure;
+        const pulse = Math.sin(animTime * 4) * 3;
+        const glow = ctx.createRadialGradient(x, y, 4, x, y, size + 14 + pulse);
+        glow.addColorStop(0, barrierOpen ? 'rgba(251, 191, 36, 0.72)' : 'rgba(148, 163, 184, 0.22)');
+        glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, size + 14 + pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#b45309';
+        ctx.strokeStyle = barrierOpen ? '#fbbf24' : '#94a3b8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(x - size / 2, y - size / 2.4, size, size * 0.82, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - size / 2, y - 2, size, 4);
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const obs of activeMap.obstacles) {
+        if (obs.type === 'wall') {
+          ctx.fillStyle = '#475569';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(obs.x, obs.y, obs.w, obs.h, 6);
+          ctx.fill();
+          ctx.stroke();
+        } else if (obs.type === 'rock') {
+          ctx.fillStyle = '#64748b';
+          ctx.beginPath();
+          ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#94a3b8';
+          ctx.beginPath();
+          ctx.arc(obs.x - obs.r * 0.25, obs.y - obs.r * 0.25, obs.r * 0.52, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(obs.x, obs.y + 10);
+          ctx.quadraticCurveTo(obs.x + 3, obs.y - 6, obs.x, obs.y - 17);
+          ctx.stroke();
+
+          ctx.fillStyle = '#22c55e';
+          for (let a = 0; a < 4; a++) {
+            const ang = (a * Math.PI) / 2 + 0.4;
+            ctx.beginPath();
+            ctx.ellipse(
+              obs.x + Math.cos(ang) * 10,
+              obs.y - 17 + Math.sin(ang) * 5,
+              10,
+              4.5,
+              ang,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+        }
+      }
+
+      for (const p of activeMap.patrols) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#fef2f2';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawLuffyCharacter() {
+      const bob = Math.abs(Math.sin(player.walkCycle)) * -4;
+      const legSwing = Math.sin(player.walkCycle) * 5;
+
+      ctx.save();
+      ctx.translate(player.x, player.y + bob);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(0, 14 - bob, 12, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.scale(player.facing, 1);
+
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-4, 5);
+      ctx.lineTo(-4 + legSwing, 13);
+      ctx.moveTo(4, 5);
+      ctx.lineTo(4 - legSwing, 13);
+      ctx.stroke();
+
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-7 + legSwing, 11.5, 6, 3);
+      ctx.fillRect(1 - legSwing, 11.5, 6, 3);
+
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6, 18, 13, 5);
+      ctx.fill();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(-3.5, -5, 7, 11);
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(0, -1, 2, 0, Math.PI * 2);
+      ctx.arc(0, 3.5, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -13, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(0, -14.5, 8.6, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(3, -13, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(2.5, -10.5, 3.5, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.stroke();
+
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(0, -18.5, 15, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath();
+      ctx.arc(0, -20.5, 7.5, Math.PI, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-7.5, -20.2, 15, 2.5);
+
+      ctx.restore();
+    }
+
+    function loop() {
+      animTime += 0.02;
+      updatePlayer();
+      drawMapBackground();
+      drawElements();
+      drawLuffyCharacter();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(k)) {
+        e.preventDefault();
+      }
+      if (k === 'arrowup' || k === 'w') keys.up = true;
+      if (k === 'arrowdown' || k === 's') keys.down = true;
+      if (k === 'arrowleft' || k === 'a') keys.left = true;
+      if (k === 'arrowright' || k === 'd') keys.right = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'arrowup' || k === 'w') keys.up = false;
+      if (k === 'arrowdown' || k === 's') keys.down = false;
+      if (k === 'arrowleft' || k === 'a') keys.left = false;
+      if (k === 'arrowright' || k === 'd') keys.right = false;
+    });
+
+    document.querySelectorAll('.dpad-btn').forEach(btn => {
+      const dir = btn.dataset.dir;
+      const press = (e) => {
+        e.preventDefault();
+        keys[dir] = true;
+        btn.classList.add('pressed');
+      };
+      const release = () => {
+        keys[dir] = false;
+        btn.classList.remove('pressed');
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointerleave', release);
+      btn.addEventListener('pointercancel', release);
+    });
+
+    loadMap(0);
+    loop();
+  </script>
+
+  <script src="musica.js"></script>
+</body>
+</html>

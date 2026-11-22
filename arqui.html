@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Arquitectura • Jeremy Ríos Ríos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020b12;
+      --green-main: #10b981;
+      --green-bright: #34d399;
+      --blue-main: #0ea5e9;
+      --blue-bright: #38bdf8;
+      --gold: #fbbf24;
+      --border: rgba(52, 211, 153, 0.55);
+      --text: #f0fdf4;
+      --muted: #cbd5e1;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.34), transparent 42%),
+        radial-gradient(circle at 86% 82%, rgba(14, 165, 233, 0.36), transparent 46%),
+        radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.2), transparent 65%),
+        linear-gradient(145deg, #01080e 0%, #051c2c 50%, #032524 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .blueprint-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.12) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: 0;
+      animation: panGrid 26s linear infinite;
+    }
+
+    @keyframes panGrid {
+      0% { background-position: 0 0; }
+      100% { background-position: 68px 68px; }
+    }
+
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.48;
+      animation: driftOrb 13s ease-in-out infinite alternate;
+    }
+
+    .orb-green {
+      width: 340px;
+      height: 340px;
+      background: #10b981;
+      top: 8%;
+      left: -60px;
+    }
+
+    .orb-blue {
+      width: 370px;
+      height: 370px;
+      background: #0ea5e9;
+      bottom: 8%;
+      right: -70px;
+      animation-delay: -6s;
+    }
+
+    @keyframes driftOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(45px, -35px) scale(1.14); }
+    }
+
+    /* Capa de mensajes flotantes */
+    .toast-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 95;
+      overflow: hidden;
+    }
+
+    .floating-popup {
+      position: fixed;
+      max-width: min(320px, 84vw);
+      padding: 0.85rem 1.25rem;
+      border-radius: 18px;
+      font-weight: 800;
+      font-size: clamp(1rem, 2.5vw, 1.22rem);
+      letter-spacing: 0.4px;
+      text-align: center;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transform: scale(0.85) translateY(10px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .floating-popup.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .floating-popup.mistake {
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.95), rgba(153, 27, 27, 0.95));
+      border: 2px solid #fca5a5;
+      color: #fef2f2;
+    }
+
+    .floating-popup.celebrate {
+      background: linear-gradient(135deg, rgba(6, 78, 59, 0.96), rgba(3, 105, 161, 0.96));
+      border: 2px solid var(--gold);
+      color: #fef08a;
+    }
+
+    /* Aviso previo */
+    .intro-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(2, 11, 18, 0.78);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .intro-modal.hidden {
+      display: none;
+    }
+
+    .intro-card {
+      max-width: 450px;
+      width: 100%;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.22), rgba(5, 24, 36, 0.96), rgba(14, 165, 233, 0.22));
+      border: 1.5px solid var(--green-bright);
+      border-radius: 24px;
+      padding: 1.6rem 1.45rem;
+      text-align: center;
+      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.7);
+    }
+
+    .intro-card h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green-bright), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.65rem;
+    }
+
+    .intro-card p {
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Barra de navegación de ancho completo */
+    .navbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background: linear-gradient(90deg, rgba(4, 24, 36, 0.88), rgba(5, 34, 42, 0.88), rgba(4, 24, 36, 0.88));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      padding: calc(0.75rem + env(safe-area-inset-top)) 2rem 0.75rem;
+    }
+
+    .navbar::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+      opacity: 0.75;
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.6px;
+      text-decoration: none;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-bright);
+      animation: dotPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.65; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav-links a {
+      position: relative;
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      transition: color 0.22s ease, background 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-links a.active {
+      color: #fff;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .nav-links a.active::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      box-shadow: 0 0 10px var(--green-bright);
+    }
+
+    /* Escenario */
+    .stage {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      max-width: 1060px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.15rem 1rem calc(5.2rem + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .studio-shell {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.14), rgba(5, 24, 36, 0.8), rgba(14, 165, 233, 0.16));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 1.3rem 1.45rem 1.45rem;
+      box-shadow:
+        0 22px 52px rgba(0, 0, 0, 0.6),
+        0 0 38px rgba(16, 185, 129, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      animation: fadeUp 0.55s ease both;
+    }
+
+    .studio-shell::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+
+    .studio-title {
+      font-size: clamp(1.25rem, 2.9vw, 1.7rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hud-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-chip {
+      background: rgba(3, 18, 28, 0.86);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 0.4rem 0.75rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+    }
+
+    .hud-chip strong {
+      color: var(--green-bright);
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+
+    .mode-switch {
+      display: flex;
+      gap: 0.4rem;
+      background: rgba(2, 14, 22, 0.85);
+      padding: 0.28rem;
+      border-radius: 14px;
+      border: 1px solid rgba(56, 189, 248, 0.32);
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.42rem 0.78rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+    }
+
+    .block-hotbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.38rem;
+    }
+
+    .block-btn {
+      background: rgba(3, 18, 28, 0.88);
+      border: 1.5px solid rgba(148, 163, 184, 0.32);
+      color: #e2e8f0;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.44rem 0.72rem;
+      border-radius: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    .block-btn:hover {
+      border-color: var(--blue-bright);
+      color: #fff;
+    }
+
+    .block-btn.active {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.32), rgba(14, 165, 233, 0.32));
+      border-color: var(--green-bright);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.28);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1.5px solid rgba(56, 189, 248, 0.42);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      background: #092b42;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas.build-mode {
+      cursor: pointer;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    .orbit-bar {
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      background: rgba(3, 18, 28, 0.72);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 14px;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .orbit-btns {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-orbit {
+      background: rgba(14, 165, 233, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.42);
+      color: #e0f2fe;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.38rem 0.72rem;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: none;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn-orbit:hover {
+      background: rgba(16, 185, 129, 0.24);
+      border-color: var(--green-bright);
+    }
+
+    .btn-orbit:active {
+      background: rgba(16, 185, 129, 0.38);
+      border-color: var(--green-bright);
+    }
+
+    .btn-orbit.reset-view {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(52, 211, 153, 0.5);
+      color: #ecfdf5;
+    }
+
+    .status-note {
+      margin-top: 0.75rem;
+      background: rgba(3, 20, 32, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-left: 4px solid var(--blue-bright);
+      border-radius: 12px;
+      padding: 0.65rem 0.95rem;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+    }
+
+    .done-banner {
+      display: none;
+      margin-top: 0.85rem;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.22), rgba(16, 185, 129, 0.24), rgba(14, 165, 233, 0.2));
+      border: 1.5px solid var(--gold);
+      border-radius: 18px;
+      padding: 1.05rem 1.2rem;
+      color: #fef9c3;
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .done-banner.show {
+      display: block;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .controls-footer {
+      margin-top: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .helper-group,
+    .action-btns {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      background: rgba(14, 165, 233, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 0.58rem 0.95rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(16, 185, 129, 0.24);
+      border-color: var(--green-bright);
+      color: #fff;
+    }
+
+    .btn-glow {
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.88rem;
+      border: none;
+      padding: 0.68rem 1.25rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-glow:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(56, 189, 248, 0.45);
+    }
+
+    .btn-next {
+      text-decoration: none;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid var(--blue-bright);
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 0.68rem 1.2rem;
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-next:hover {
+      background: rgba(16, 185, 129, 0.26);
+      border-color: var(--green-bright);
+      color: #fff;
+    }
+
+    /* Barra flotante de audio */
+    .audio-bar {
+      position: fixed;
+      bottom: calc(0.85rem + env(safe-area-inset-bottom));
+      right: 0.9rem;
+      z-index: 80;
+      background: rgba(3, 20, 30, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--green-bright);
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 18px rgba(16, 185, 129, 0.22);
+    }
+
+    .audio-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.78rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .audio-meta {
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .audio-meta strong {
+      display: block;
+      color: var(--green-bright);
+    }
+
+    @media (max-width: 600px) {
+      .navbar {
+        padding: calc(0.6rem + env(safe-area-inset-top)) 0.8rem 0.6rem;
+      }
+
+      .nav-inner {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .brand {
+        font-size: 0.86rem;
+      }
+
+      .nav-links {
+        gap: 0.15rem;
+      }
+
+      .nav-links a {
+        font-size: 0.78rem;
+        padding: 0.32rem 0.6rem;
+      }
+
+      .stage {
+        padding: 0.85rem 0.75rem calc(5.2rem + env(safe-area-inset-bottom));
+      }
+
+      .studio-shell {
+        padding: 1rem 0.9rem 1.15rem;
+        border-radius: 22px;
+      }
+
+      canvas {
+        aspect-ratio: 4 / 3;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blueprint-grid"></div>
+  <div class="ambient-orb orb-green"></div>
+  <div class="ambient-orb orb-blue"></div>
+
+  <div class="toast-layer" id="toastLayer"></div>
+
+  <!-- Aviso previo -->
+  <div class="intro-modal" id="introModal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <div class="intro-card">
+      <h2 id="introTitle">🏡 ¡Tu Casita Realista en 360°!</h2>
+      <p>
+        Parcela de <strong>15×15</strong> con hasta <strong>10 bloques</strong> de altura y todos los bloques del mismo tamaño uniforme. Al pasar el cursor verás resaltado el bloque exacto donde caerá la siguiente pieza, con <strong>Zoom</strong>, giro en <strong>360°</strong> y botón de <strong>Finalizar plano</strong>.
+      </p>
+      <button class="btn-glow" type="button" onclick="closeIntro()">¡A construir!</button>
+    </div>
+  </div>
+
+  <!-- Barra de navegación de ancho completo -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-dot"></span>
+        JEREMY • RÍOS RÍOS
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Inicio</a>
+        <a href="One.html">One Piece</a>
+        <a href="messi.html">Messi</a>
+        <a href="arqui.html" class="active">Arquitectura</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="studio-shell">
+      <div class="top-bar">
+        <h1 class="studio-title">🏡 Casita de Bloques 360° • Parcela 15×15</h1>
+        <div class="hud-group">
+          <div class="hud-chip">Ángulo: <strong id="angleStat">45°</strong></div>
+          <div class="hud-chip">Zoom: <strong id="zoomStat">100%</strong></div>
+          <div class="hud-chip">Bloques: <strong id="blocksCount">0</strong></div>
+        </div>
+      </div>
+
+      <div class="toolbar-row">
+        <div class="mode-switch" role="group" aria-label="Modo de interacción">
+          <button class="mode-btn active" id="modeBuildBtn" type="button" onclick="setInteractionMode('build')">🧱 Construir</button>
+          <button class="mode-btn" id="modeOrbitBtn" type="button" onclick="setInteractionMode('orbit')">🔄 Girar 360°</button>
+        </div>
+
+        <div class="block-hotbar" id="blockHotbar">
+          <button class="block-btn active" type="button" data-block="wood">🪵 Madera</button>
+          <button class="block-btn" type="button" data-block="stone">🪨 Piedra</button>
+          <button class="block-btn" type="button" data-block="glass">🪟 Ventana</button>
+          <button class="block-btn" type="button" data-block="door">🚪 Puerta</button>
+          <button class="block-btn" type="button" data-block="roof">🟥 Techo</button>
+          <button class="block-btn" type="button" data-block="path">🟨 Camino</button>
+          <button class="block-btn" type="button" data-block="grass">🌿 Pasto y plantas</button>
+          <button class="block-btn" type="button" data-block="erase">🧹 Quitar</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="craftCanvas" class="build-mode" width="800" height="500"></canvas>
+      </div>
+
+      <div class="orbit-bar">
+        <span>Gira en <strong>360°</strong> o ajusta el <strong>Zoom</strong> de tu casita (máx. <strong>10 niveles</strong>):</span>
+        <div class="orbit-btns">
+          <button class="btn-orbit" id="rotLeftBtn" type="button">⟲ Girar izq</button>
+          <button class="btn-orbit" id="rotRightBtn" type="button">⟳ Girar der</button>
+          <button class="btn-orbit" type="button" onclick="adjustZoom(0.18)">🔍+ Acercar</button>
+          <button class="btn-orbit" type="button" onclick="adjustZoom(-0.18)">🔍- Alejar</button>
+          <button class="btn-orbit reset-view" type="button" onclick="resetCameraView()">↺ Vista normal</button>
+        </div>
+      </div>
+
+      <div class="status-note" id="statusNote">
+        Pasa el cursor para ver el contorno donde caerá el próximo bloque (hasta <strong>10 bloques</strong> de alto). Cada toque coloca <strong>1 solo bloque</strong> del mismo tamaño.
+      </div>
+
+      <div class="done-banner" id="doneBanner">
+        🏡 <strong>¡HAS TERMINADO TU CASA, JEREMY!</strong> Gira con el mouse en 360° para ver cómo quedó tu casita. ¡Feliz cumpleaños y que este nuevo año esté lleno de grandes proyectos!
+      </div>
+
+      <div class="controls-footer">
+        <div class="helper-group">
+          <button class="btn-secondary" type="button" onclick="buildStarterHouse()">🏡 Armar casita base</button>
+          <button class="btn-secondary" type="button" onclick="clearParcel()">🗑️ Limpiar parcela</button>
+        </div>
+
+        <div class="action-btns">
+          <button class="btn-glow" type="button" onclick="finishHousePlan()">🏁 Finalizar plano</button>
+          <a href="index.html" class="btn-next">Volver al Inicio →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Control de música -->
+  <div class="audio-bar">
+    <button class="audio-btn" id="audioToggle" type="button" onclick="toggleAudio()">▶</button>
+    <div class="audio-meta">
+      <strong>Sorpresa musical</strong>
+      <span id="audioState" style="color: #cbd5e1;">Toca para oír</span>
+    </div>
+  </div>
+
+  <audio id="bgMusic" src="Mananitas.mp3" preload="auto" loop></audio>
+
+  <script>
+    const toastLayer = document.getElementById('toastLayer');
+    const introModal = document.getElementById('introModal');
+    const canvas = document.getElementById('craftCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const mistakeMessages = [
+      '¡QUE MENSO!',
+      '¡AJAJA TODO BABOSO!',
+      '¡SE EQUIVOCO JAJAJ!'
+    ];
+    let lastMistakeIndex = -1;
+
+    const winMessages = [
+      '¡LOBA LOBA!',
+      '¡APOCO SI MI LEONA!',
+      '¡QUE DIVA!'
+    ];
+    let lastWinIndex = -1;
+
+    function getNextDistinctIndex(len, lastIdx) {
+      if (len <= 1) return 0;
+      let idx = Math.floor(Math.random() * len);
+      if (idx === lastIdx) idx = (idx + 1) % len;
+      return idx;
+    }
+
+    function spawnPopupAtRandomSpot(text, variantClass, durationMs = 3000) {
+      const el = document.createElement('div');
+      el.className = `floating-popup ${variantClass}`;
+      el.textContent = text;
+      toastLayer.appendChild(el);
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const rect = el.getBoundingClientRect();
+      const maxX = Math.max(16, vw - rect.width - 24);
+      const maxY = Math.max(80, vh - rect.height - 80);
+      el.style.left = `${16 + Math.random() * maxX}px`;
+      el.style.top = `${76 + Math.random() * maxY}px`;
+
+      requestAnimationFrame(() => el.classList.add('visible'));
+      setTimeout(() => {
+        el.classList.remove('visible');
+        setTimeout(() => el.remove(), 260);
+      }, durationMs);
+    }
+
+    function closeIntro() {
+      introModal.classList.add('hidden');
+    }
+
+    const GRID = 15;
+    const MAX_STACK = 10;
+    const UNIFORM_BLOCK_H = 11;
+
+    let selectedBlock = 'wood';
+    let interactionMode = 'build'; // 'build' | 'orbit'
+    let yawAngle = Math.PI / 4;
+    let zoomLevel = 1.0;
+    let rotHoldDir = 0;
+    let isOrbitDragging = false;
+    let downPos = { x: 0, y: 0 };
+    let downCell = null;
+    let lastPointerX = 0;
+    let hoverCell = null;
+    let lastActionTimestamp = 0;
+    let keyLock = false;
+    let cloudOffset = 0;
+
+    let world = Array.from({ length: GRID }, () => Array.from({ length: GRID }, () => []));
+
+    const builder = {
+      wx: 0,
+      wz: 2.5,
+      targetWx: 0,
+      targetWz: 2.5,
+      walkCycle: 0,
+      swingTimer: 0
+    };
+
+    const blockSpecs = {
+      wood:  { name: 'Madera',          top: '#c48341', left: '#965b24', right: '#6e4015', trim: '#4a290b', h: UNIFORM_BLOCK_H },
+      stone: { name: 'Piedra',          top: '#9aa4b0', left: '#6d7785', right: '#4d5561', trim: '#323842', h: UNIFORM_BLOCK_H },
+      glass: { name: 'Ventana',         top: '#bae6fd', left: '#38bdf8', right: '#0284c7', trim: '#f8fafc', h: UNIFORM_BLOCK_H },
+      door:  { name: 'Puerta',          top: '#c48341', left: '#92400e', right: '#5c2707', trim: '#fde68a', h: UNIFORM_BLOCK_H },
+      roof:  { name: 'Techo',           top: '#b91c1c', left: '#881313', right: '#5e0d0d', trim: '#fca5a5', h: UNIFORM_BLOCK_H },
+      path:  { name: 'Camino',          top: '#dfd0a8', left: '#bfb088', right: '#9b8c66', trim: '#786b4a', h: UNIFORM_BLOCK_H },
+      grass: { name: 'Pasto y plantas', top: '#4ade80', left: '#6b4423', right: '#4d3018', trim: '#15803d', h: UNIFORM_BLOCK_H }
+    };
+
+    const originX = canvas.width / 2;
+    const originY = 285;
+    const baseScaleRadius = 28.5;
+
+    function getScaleRadius() {
+      return baseScaleRadius * zoomLevel;
+    }
+
+    function setInteractionMode(mode) {
+      interactionMode = mode;
+      document.getElementById('modeBuildBtn').classList.toggle('active', mode === 'build');
+      document.getElementById('modeOrbitBtn').classList.toggle('active', mode === 'orbit');
+      canvas.classList.toggle('build-mode', mode === 'build');
+    }
+
+    function updateCameraHud() {
+      const deg = (((Math.round((yawAngle * 180) / Math.PI)) % 360) + 360) % 360;
+      document.getElementById('angleStat').textContent = `${deg}°`;
+      document.getElementById('zoomStat').textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+
+    function adjustZoom(delta) {
+      zoomLevel = Math.max(0.6, Math.min(1.75, +(zoomLevel + delta).toFixed(2)));
+      updateCameraHud();
+    }
+
+    function resetCameraView() {
+      yawAngle = Math.PI / 4;
+      zoomLevel = 1.0;
+      updateCameraHud();
+    }
+
+    function projectPoint(wx, wy, wz) {
+      const s = getScaleRadius();
+      const cosA = Math.cos(yawAngle);
+      const sinA = Math.sin(yawAngle);
+      const rx = wx * cosA - wz * sinA;
+      const rz = wx * sinA + wz * cosA;
+      return {
+        x: originX + rx * s,
+        y: originY + rz * s * 0.52 - wy * zoomLevel,
+        depth: rz
+      };
+    }
+
+    function cellCenterWorld(r, c) {
+      return {
+        wx: c - GRID / 2 + 0.5,
+        wz: r - GRID / 2 + 0.5
+      };
+    }
+
+    function getStackHeight(r, c) {
+      return world[r][c].length * UNIFORM_BLOCK_H;
+    }
+
+    function pointInPoly(px, py, pts) {
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const xi = pts[i].x, yi = pts[i].y;
+        const xj = pts[j].x, yj = pts[j].y;
+        const intersect = ((yi > py) !== (yj > py)) &&
+          (px < (xj - xi) * (py - yi) / ((yj - yi) || 0.00001) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function pickCellAtScreen(sx, sy) {
+      const halfGrid = GRID / 2;
+      let best = null;
+      let bestDepth = -Infinity;
+
+      for (let r = 0; r < GRID; r++) {
+        for (let c = 0; c < GRID; c++) {
+          const elev = getStackHeight(r, c);
+          const x0 = c - halfGrid;
+          const x1 = x0 + 1;
+          const z0 = r - halfGrid;
+          const z1 = z0 + 1;
+
+          const topPoly = [
+            projectPoint(x0, elev, z0),
+            projectPoint(x1, elev, z0),
+            projectPoint(x1, elev, z1),
+            projectPoint(x0, elev, z1)
+          ];
+
+          if (pointInPoly(sx, sy, topPoly)) {
+            const d = (topPoly[0].depth + topPoly[2].depth) / 2 + elev * 0.02;
+            if (d > bestDepth) {
+              bestDepth = d;
+              best = { r, c };
+            }
+          }
+
+          if (elev > 0) {
+            const basePoly = [
+              projectPoint(x0, 0, z0),
+              projectPoint(x1, 0, z0),
+              projectPoint(x1, 0, z1),
+              projectPoint(x0, 0, z1)
+            ];
+            const pairs = [[0, 1], [1, 2], [2, 3], [3, 0]];
+            for (const [i, j] of pairs) {
+              const sidePoly = [topPoly[i], topPoly[j], basePoly[j], basePoly[i]];
+              if (pointInPoly(sx, sy, sidePoly)) {
+                const d = (basePoly[i].depth + basePoly[j].depth) / 2 + elev * 0.01;
+                if (d > bestDepth) {
+                  bestDepth = d;
+                  best = { r, c };
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return best;
+    }
+
+    document.querySelectorAll('.block-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.block-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedBlock = btn.dataset.block;
+        setInteractionMode('build');
+        btn.blur();
+      });
+    });
+
+    function countBlocks() {
+      let total = 0;
+      for (let r = 0; r < GRID; r++) {
+        for (let c = 0; c < GRID; c++) {
+          total += world[r][c].length;
+        }
+      }
+      document.getElementById('blocksCount').textContent = total;
+      return total;
+    }
+
+    function applySingleBlockAction(r, c) {
+      if (r < 0 || r >= GRID || c < 0 || c >= GRID) return;
+
+      const now = performance.now();
+      if (now - lastActionTimestamp < 190) return;
+      lastActionTimestamp = now;
+
+      const { wx, wz } = cellCenterWorld(r, c);
+      builder.targetWx = Math.max(-GRID / 2 + 0.6, Math.min(GRID / 2 - 0.6, wx));
+      builder.targetWz = Math.max(-GRID / 2 + 0.6, Math.min(GRID / 2 - 0.6, wz + 0.65));
+      builder.swingTimer = 16;
+
+      if (selectedBlock === 'erase') {
+        if (world[r][c].length > 0) {
+          world[r][c].pop();
+          document.getElementById('statusNote').innerHTML = '🧹 Retiraste 1 bloque superior.';
+        }
+      } else {
+        if (world[r][c].length < MAX_STACK) {
+          world[r][c].push(selectedBlock);
+          document.getElementById('statusNote').innerHTML = `🧱 Colocaste 1 bloque de <strong>${blockSpecs[selectedBlock].name}</strong> (nivel ${world[r][c].length}/${MAX_STACK}).`;
+        } else {
+          document.getElementById('statusNote').innerHTML = `⬆️ Límite máximo alcanzado: <strong>${MAX_STACK} bloques</strong> en esa columna.`;
+        }
+      }
+
+      document.getElementById('doneBanner').classList.remove('show');
+      countBlocks();
+    }
+
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        sx: (e.clientX - rect.left) * scaleX,
+        sy: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      adjustZoom(e.deltaY < 0 ? 0.1 : -0.1);
+    }, { passive: false });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      const { sx, sy } = getCanvasCoords(e);
+      downPos = { x: sx, y: sy };
+      lastPointerX = sx;
+
+      if (interactionMode === 'orbit' || e.button === 2) {
+        isOrbitDragging = true;
+        downCell = null;
+        return;
+      }
+
+      const picked = pickCellAtScreen(sx, sy);
+      if (picked) {
+        downCell = picked;
+        hoverCell = picked;
+      } else {
+        downCell = null;
+        isOrbitDragging = true;
+      }
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      const { sx, sy } = getCanvasCoords(e);
+      hoverCell = pickCellAtScreen(sx, sy);
+
+      if (isOrbitDragging) {
+        const deltaX = sx - lastPointerX;
+        yawAngle += deltaX * 0.013;
+        updateCameraHud();
+      }
+      lastPointerX = sx;
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      hoverCell = null;
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+      const { sx, sy } = getCanvasCoords(e);
+      const moved = Math.hypot(sx - downPos.x, sy - downPos.y);
+
+      if (!isOrbitDragging && downCell && moved < 10 && interactionMode === 'build') {
+        applySingleBlockAction(downCell.r, downCell.c);
+      }
+
+      isOrbitDragging = false;
+      downCell = null;
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.repeat || keyLock) return;
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        yawAngle -= 0.14;
+        updateCameraHud();
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        yawAngle += 0.14;
+        updateCameraHud();
+        return;
+      }
+      if (e.key === '+' || e.key === '=') {
+        adjustZoom(0.15);
+        return;
+      }
+      if (e.key === '-' || e.key === '_') {
+        adjustZoom(-0.15);
+        return;
+      }
+      if ((e.key === ' ' || e.key === 'Enter') && hoverCell && interactionMode === 'build' && introModal.classList.contains('hidden')) {
+        e.preventDefault();
+        keyLock = true;
+        applySingleBlockAction(hoverCell.r, hoverCell.c);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        keyLock = false;
+      }
+    });
+
+    function bindHoldButton(btnId, dir) {
+      const btn = document.getElementById(btnId);
+      const start = (e) => { e.preventDefault(); rotHoldDir = dir; };
+      const stop = () => { if (rotHoldDir === dir) rotHoldDir = 0; };
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', stop);
+      btn.addEventListener('pointerleave', stop);
+      btn.addEventListener('pointercancel', stop);
+    }
+    bindHoldButton('rotLeftBtn', -1);
+    bindHoldButton('rotRightBtn', 1);
+
+    function clearParcel() {
+      world = Array.from({ length: GRID }, () => Array.from({ length: GRID }, () => []));
+      document.getElementById('doneBanner').classList.remove('show');
+      document.getElementById('statusNote').innerHTML = 'Parcela 15×15 limpia. Coloca hasta 10 bloques de alto para armar tu casita antes de finalizar.';
+      countBlocks();
+    }
+
+    function buildStarterHouse() {
+      clearParcel();
+      for (let r = 4; r <= 9; r++) {
+        for (let c = 4; c <= 10; c++) {
+          const isBorder = r === 4 || r === 9 || c === 4 || c === 10;
+          if (isBorder) {
+            if (r === 9 && c === 7) {
+              world[r][c].push('door');
+            } else if ((r === 9 && (c === 6 || c === 8)) || (r === 4 && (c === 6 || c === 8)) || (c === 4 && r === 7) || (c === 10 && r === 7)) {
+              world[r][c].push('glass');
+            } else {
+              world[r][c].push((c === 4 || c === 10) && (r === 4 || r === 9) ? 'stone' : 'wood');
+            }
+          }
+        }
+      }
+
+      for (let r = 4; r <= 9; r++) {
+        for (let c = 4; c <= 10; c++) {
+          const isBorder = r === 4 || r === 9 || c === 4 || c === 10;
+          if (isBorder) {
+            const win = (r === 4 && c === 7) || (c === 10 && r === 7);
+            world[r][c].push(win ? 'glass' : 'wood');
+          }
+        }
+      }
+
+      for (let r = 4; r <= 9; r++) {
+        for (let c = 4; c <= 10; c++) {
+          world[r][c].push('roof');
+        }
+      }
+      for (let r = 5; r <= 8; r++) {
+        for (let c = 5; c <= 9; c++) {
+          world[r][c].push('roof');
+        }
+      }
+
+      for (let r = 10; r <= 13; r++) {
+        world[r][7].push('path');
+        world[r][6].push('grass');
+        world[r][8].push('grass');
+      }
+
+      countBlocks();
+      document.getElementById('statusNote').innerHTML = '🏡 ¡Casita base 15×15 con bloques uniformes cargada! Puedes apilar hasta <strong>10 niveles</strong>, girar en 360° o pulsar <strong>Finalizar plano</strong>.';
+    }
+
+    function finishHousePlan() {
+      const total = countBlocks();
+
+      if (total === 0) {
+        document.getElementById('doneBanner').classList.remove('show');
+        document.getElementById('statusNote').innerHTML = '⚠️ <strong>Aún no has hecho tu casa.</strong> Coloca al menos un cuadro/bloque en la parcela para poder finalizar.';
+        lastMistakeIndex = getNextDistinctIndex(mistakeMessages.length, lastMistakeIndex);
+        spawnPopupAtRandomSpot(mistakeMessages[lastMistakeIndex], 'mistake', 3000);
+        return;
+      }
+
+      document.getElementById('doneBanner').classList.add('show');
+      document.getElementById('statusNote').innerHTML = '🎉 ¡Plano finalizado! Has terminado tu casa.';
+
+      lastWinIndex = getNextDistinctIndex(winMessages.length, lastWinIndex);
+      spawnPopupAtRandomSpot(winMessages[lastWinIndex], 'celebrate', 3000);
+
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ['#fbbf24', '#10b981', '#34d399', '#38bdf8', '#ffffff']
+      });
+    }
+
+    function updateWorldMotion() {
+      if (rotHoldDir !== 0) {
+        yawAngle += rotHoldDir * 0.03;
+        updateCameraHud();
+      }
+
+      const dx = builder.targetWx - builder.wx;
+      const dz = builder.targetWz - builder.wz;
+      const dist = Math.hypot(dx, dz);
+      if (dist > 0.04) {
+        const spd = 0.09;
+        builder.wx += (dx / dist) * Math.min(spd, dist);
+        builder.wz += (dz / dist) * Math.min(spd, dist);
+        builder.walkCycle += 0.25;
+      } else {
+        builder.walkCycle = 0;
+      }
+
+      if (builder.swingTimer > 0) {
+        builder.swingTimer--;
+      }
+    }
+
+    function drawBackground() {
+      const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      sky.addColorStop(0, '#0a2d45');
+      sky.addColorStop(0.55, '#072236');
+      sky.addColorStop(1, '#03121c');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      cloudOffset = (cloudOffset + 0.16) % (canvas.width + 220);
+      const clouds = [
+        { x: -120 + cloudOffset, y: 28, w: 72, h: 12 },
+        { x: -330 + cloudOffset, y: 50, w: 54, h: 10 },
+        { x: 180 + cloudOffset * 0.7, y: 22, w: 84, h: 12 }
+      ];
+      for (const cl of clouds) {
+        const cx = ((cl.x % (canvas.width + 180)) + (canvas.width + 180)) % (canvas.width + 180) - 90;
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.12)';
+        ctx.fillRect(cx, cl.y, cl.w, cl.h);
+      }
+    }
+
+    function drawPlantsOnGrass(r, c, topY) {
+      const cx = c - GRID / 2 + 0.5;
+      const cz = r - GRID / 2 + 0.5;
+
+      const tufts = [
+        { ox: -0.22, oz: -0.18, h: 5.0, color: '#16a34a', flower: '#f43f5e' },
+        { ox:  0.18, oz: -0.12, h: 4.4, color: '#22c55e', flower: '#facc15' },
+        { ox:  0.02, oz:  0.22, h: 5.4, color: '#15803d', flower: '#38bdf8' }
+      ];
+
+      tufts.forEach((t, idx) => {
+        const base = projectPoint(cx + t.ox, topY, cz + t.oz);
+        const tipL = projectPoint(cx + t.ox - 0.08, topY + t.h, cz + t.oz);
+        const tipR = projectPoint(cx + t.ox + 0.08, topY + t.h * 0.9, cz + t.oz + 0.05);
+
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 1.7 * zoomLevel;
+        ctx.beginPath();
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tipL.x, tipL.y);
+        ctx.moveTo(base.x, base.y);
+        ctx.lineTo(tipR.x, tipR.y);
+        ctx.stroke();
+
+        if ((r + c + idx) % 2 === 0) {
+          ctx.fillStyle = t.flower;
+          ctx.beginPath();
+          ctx.arc(tipL.x, tipL.y, 2.0 * zoomLevel, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    function drawRealisticBlock(r, c, baseY, h, spec, isTopHighlighted = false) {
+      const half = 0.5;
+      const cx = c - GRID / 2 + half;
+      const cz = r - GRID / 2 + half;
+
+      const cornersBase = [
+        projectPoint(cx - half, baseY, cz - half),
+        projectPoint(cx + half, baseY, cz - half),
+        projectPoint(cx + half, baseY, cz + half),
+        projectPoint(cx - half, baseY, cz + half)
+      ];
+      const cornersTop = [
+        projectPoint(cx - half, baseY + h, cz - half),
+        projectPoint(cx + half, baseY + h, cz - half),
+        projectPoint(cx + half, baseY + h, cz + half),
+        projectPoint(cx - half, baseY + h, cz + half)
+      ];
+
+      const sidePairs = [
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [3, 0]
+      ];
+
+      const visibleSides = sidePairs
+        .map(([i, j]) => ({
+          i,
+          j,
+          avgDepth: (cornersBase[i].depth + cornersBase[j].depth) / 2
+        }))
+        .sort((a, b) => b.avgDepth - a.avgDepth)
+        .slice(0, 2);
+
+      visibleSides.forEach((side, idx) => {
+        const b1 = cornersBase[side.i];
+        const b2 = cornersBase[side.j];
+        const t2 = cornersTop[side.j];
+        const t1 = cornersTop[side.i];
+
+        ctx.beginPath();
+        ctx.moveTo(t1.x, t1.y);
+        ctx.lineTo(t2.x, t2.y);
+        ctx.lineTo(b2.x, b2.y);
+        ctx.lineTo(b1.x, b1.y);
+        ctx.closePath();
+        ctx.fillStyle = idx === 0 ? spec.left : spec.right;
+        ctx.fill();
+        ctx.strokeStyle = isTopHighlighted ? '#fbbf24' : 'rgba(15, 23, 42, 0.45)';
+        ctx.lineWidth = isTopHighlighted ? 1.5 : 0.95;
+        ctx.stroke();
+
+        if (spec.name === 'Pasto y plantas') {
+          const g1x = t1.x + (b1.x - t1.x) * 0.36;
+          const g1y = t1.y + (b1.y - t1.y) * 0.36;
+          const g2x = t2.x + (b2.x - t2.x) * 0.36;
+          const g2y = t2.y + (b2.y - t2.y) * 0.36;
+          ctx.beginPath();
+          ctx.moveTo(t1.x, t1.y);
+          ctx.lineTo(t2.x, t2.y);
+          ctx.lineTo(g2x, g2y);
+          ctx.lineTo(g1x, g1y);
+          ctx.closePath();
+          ctx.fillStyle = idx === 0 ? '#22c55e' : '#16a34a';
+          ctx.fill();
+        } else if (spec.name === 'Madera') {
+          ctx.strokeStyle = spec.trim;
+          ctx.lineWidth = 0.85;
+          ctx.beginPath();
+          ctx.moveTo((t1.x + b1.x) / 2, (t1.y + b1.y) / 2);
+          ctx.lineTo((t2.x + b2.x) / 2, (t2.y + b2.y) / 2);
+          ctx.stroke();
+        } else if (spec.name === 'Piedra') {
+          ctx.strokeStyle = spec.trim;
+          ctx.lineWidth = 0.85;
+          ctx.beginPath();
+          ctx.moveTo((t1.x + t2.x) / 2, (t1.y + t2.y) / 2);
+          ctx.lineTo((b1.x + b2.x) / 2, (b1.y + b2.y) / 2);
+          ctx.stroke();
+        } else if (spec.name === 'Ventana') {
+          const mx1 = t1.x + (t2.x - t1.x) * 0.25;
+          const my1 = t1.y + (t2.y - t1.y) * 0.25 + (b1.y - t1.y) * 0.22;
+          const mx2 = t1.x + (t2.x - t1.x) * 0.75;
+          const my2 = t1.y + (t2.y - t1.y) * 0.75 + (b2.y - t2.y) * 0.22;
+          const hWin = (b1.y - t1.y) * 0.56;
+          ctx.fillStyle = '#e0f2fe';
+          ctx.beginPath();
+          ctx.moveTo(mx1, my1);
+          ctx.lineTo(mx2, my2);
+          ctx.lineTo(mx2, my2 + hWin);
+          ctx.lineTo(mx1, my1 + hWin);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = spec.trim;
+          ctx.lineWidth = 1.05;
+          ctx.stroke();
+        } else if (spec.name === 'Puerta') {
+          const px1 = t1.x + (t2.x - t1.x) * 0.28;
+          const py1 = t1.y + (t2.y - t1.y) * 0.28 + (b1.y - t1.y) * 0.14;
+          const px2 = t1.x + (t2.x - t1.x) * 0.72;
+          const py2 = t1.y + (t2.y - t1.y) * 0.72 + (b2.y - t2.y) * 0.14;
+          const hDoor = (b1.y - t1.y) * 0.82;
+          ctx.fillStyle = '#78350f';
+          ctx.beginPath();
+          ctx.moveTo(px1, py1);
+          ctx.lineTo(px2, py2);
+          ctx.lineTo(px2, py2 + hDoor);
+          ctx.lineTo(px1, py1 + hDoor);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = spec.trim;
+          ctx.lineWidth = 1.05;
+          ctx.stroke();
+        }
+      });
+
+      ctx.beginPath();
+      ctx.moveTo(cornersTop[0].x, cornersTop[0].y);
+      ctx.lineTo(cornersTop[1].x, cornersTop[1].y);
+      ctx.lineTo(cornersTop[2].x, cornersTop[2].y);
+      ctx.lineTo(cornersTop[3].x, cornersTop[3].y);
+      ctx.closePath();
+      ctx.fillStyle = spec.top;
+      ctx.fill();
+      ctx.strokeStyle = isTopHighlighted ? '#fbbf24' : 'rgba(15, 23, 42, 0.45)';
+      ctx.lineWidth = isTopHighlighted ? 1.8 : 0.95;
+      ctx.stroke();
+
+      if (spec.name === 'Pasto y plantas') {
+        drawPlantsOnGrass(r, c, baseY + h);
+      }
+
+      if (isTopHighlighted) {
+        ctx.fillStyle = selectedBlock === 'erase'
+          ? 'rgba(239, 68, 68, 0.35)'
+          : 'rgba(251, 191, 36, 0.28)';
+        ctx.fill();
+      }
+    }
+
+    function drawGhostNextBlock(r, c, baseY) {
+      if (selectedBlock === 'erase') return;
+      if (world[r][c].length >= MAX_STACK) return;
+
+      const spec = blockSpecs[selectedBlock];
+      const h = spec.h;
+      const half = 0.5;
+      const cx = c - GRID / 2 + half;
+      const cz = r - GRID / 2 + half;
+
+      const b = [
+        projectPoint(cx - half, baseY, cz - half),
+        projectPoint(cx + half, baseY, cz - half),
+        projectPoint(cx + half, baseY, cz + half),
+        projectPoint(cx - half, baseY, cz + half)
+      ];
+      const t = [
+        projectPoint(cx - half, baseY + h, cz - half),
+        projectPoint(cx + half, baseY + h, cz - half),
+        projectPoint(cx + half, baseY + h, cz + half),
+        projectPoint(cx - half, baseY + h, cz + half)
+      ];
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(52, 211, 153, 0.24)';
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.7;
+      ctx.setLineDash([4, 3]);
+
+      ctx.beginPath();
+      ctx.moveTo(t[0].x, t[0].y);
+      ctx.lineTo(t[1].x, t[1].y);
+      ctx.lineTo(t[2].x, t[2].y);
+      ctx.lineTo(t[3].x, t[3].y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        ctx.moveTo(b[i].x, b[i].y);
+        ctx.lineTo(t[i].x, t[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBuilderAvatar() {
+      const pos = projectPoint(builder.wx, 0, builder.wz);
+      const bob = Math.abs(Math.sin(builder.walkCycle)) * -3.2 * zoomLevel;
+      const swing = builder.swingTimer > 0 ? Math.sin(builder.swingTimer * 0.65) * 7 : Math.sin(builder.walkCycle) * 3.5;
+
+      ctx.save();
+      ctx.translate(pos.x, pos.y + bob);
+      ctx.scale(zoomLevel * 1.15, zoomLevel * 1.15);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob / (zoomLevel * 1.15), 10, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#1e40af';
+      ctx.lineWidth = 3.6;
+      ctx.beginPath();
+      ctx.moveTo(-3, -8);
+      ctx.lineTo(-3 + swing * 0.55, 0);
+      ctx.moveTo(3, -8);
+      ctx.lineTo(3 - swing * 0.55, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-6, -19, 12, 11);
+
+      ctx.strokeStyle = '#fed7aa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(6, -16);
+      ctx.lineTo(11, -14 - swing);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(-6.5, -31, 13, 12);
+
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-6.5, -32, 13, 4.5);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-3, -26, 2, 2.2);
+      ctx.fillRect(1.8, -26, 2, 2.2);
+
+      ctx.restore();
+    }
+
+    function drawScene() {
+      drawBackground();
+
+      const halfGrid = GRID / 2;
+      const pNW = projectPoint(-halfGrid, 0, -halfGrid);
+      const pNE = projectPoint(halfGrid, 0, -halfGrid);
+      const pSE = projectPoint(halfGrid, 0, halfGrid);
+      const pSW = projectPoint(-halfGrid, 0, halfGrid);
+
+      const dirtDepth = 20 * zoomLevel;
+      const frontEdges = [
+        [pSW, pSE],
+        [pSE, pNE],
+        [pNE, pNW],
+        [pNW, pSW]
+      ]
+        .map(([a, b]) => ({ a, b, d: (a.depth + b.depth) / 2 }))
+        .sort((x, y) => y.d - x.d)
+        .slice(0, 2);
+
+      frontEdges.forEach((edge, i) => {
+        ctx.beginPath();
+        ctx.moveTo(edge.a.x, edge.a.y);
+        ctx.lineTo(edge.b.x, edge.b.y);
+        ctx.lineTo(edge.b.x, edge.b.y + dirtDepth);
+        ctx.lineTo(edge.a.x, edge.a.y + dirtDepth);
+        ctx.closePath();
+        ctx.fillStyle = i === 0 ? '#5c3a21' : '#3f2716';
+        ctx.fill();
+      });
+
+      const cells = [];
+      for (let r = 0; r < GRID; r++) {
+        for (let c = 0; c < GRID; c++) {
+          const { wx, wz } = cellCenterWorld(r, c);
+          const centerProj = projectPoint(wx, 0, wz);
+          cells.push({ r, c, depth: centerProj.depth });
+        }
+      }
+      cells.sort((a, b) => a.depth - b.depth);
+
+      const builderProj = projectPoint(builder.wx, 0, builder.wz);
+      let builderDrawn = false;
+
+      for (const cell of cells) {
+        if (!builderDrawn && builderProj.depth < cell.depth) {
+          drawBuilderAvatar();
+          builderDrawn = true;
+        }
+
+        const { r, c } = cell;
+        const c0 = projectPoint(c - halfGrid, 0, r - halfGrid);
+        const c1 = projectPoint(c - halfGrid + 1, 0, r - halfGrid);
+        const c2 = projectPoint(c - halfGrid + 1, 0, r - halfGrid + 1);
+        const c3 = projectPoint(c - halfGrid, 0, r - halfGrid + 1);
+
+        const isHovered = hoverCell && hoverCell.r === r && hoverCell.c === c && interactionMode === 'build';
+
+        ctx.beginPath();
+        ctx.moveTo(c0.x, c0.y);
+        ctx.lineTo(c1.x, c1.y);
+        ctx.lineTo(c2.x, c2.y);
+        ctx.lineTo(c3.x, c3.y);
+        ctx.closePath();
+        ctx.fillStyle = isHovered
+          ? 'rgba(52, 211, 153, 0.55)'
+          : ((r + c) % 2 === 0 ? '#2f855a' : '#276749');
+        ctx.fill();
+        ctx.strokeStyle = isHovered ? '#fbbf24' : 'rgba(198, 246, 213, 0.25)';
+        ctx.lineWidth = isHovered ? 1.8 : 0.85;
+        ctx.stroke();
+
+        const stack = world[r][c];
+        let elev = 0;
+        stack.forEach((type, idx) => {
+          const spec = blockSpecs[type];
+          const isTopOfHovered = isHovered && idx === stack.length - 1;
+          drawRealisticBlock(r, c, elev, UNIFORM_BLOCK_H, spec, isTopOfHovered);
+          elev += UNIFORM_BLOCK_H;
+        });
+
+        if (isHovered) {
+          drawGhostNextBlock(r, c, elev);
+        }
+      }
+
+      if (!builderDrawn) {
+        drawBuilderAvatar();
+      }
+    }
+
+    function loop() {
+      updateWorldMotion();
+      drawScene();
+      requestAnimationFrame(loop);
+    }
+
+    updateCameraHud();
+    countBlocks();
+    loop();
+  </script>
+
+  <script src="musica.js"></script>
+</body>
+</html>

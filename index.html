@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Feliz cumpleaños, Jeremy Ríos Ríos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #020b12;
+      --green-main: #10b981;
+      --green-bright: #34d399;
+      --blue-main: #0ea5e9;
+      --blue-bright: #38bdf8;
+      --glass: rgba(9, 44, 63, 0.44);
+      --border: rgba(52, 211, 153, 0.55);
+      --text: #f0fdf4;
+      --muted: #cbd5e1;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(16, 185, 129, 0.36), transparent 42%),
+        radial-gradient(circle at 86% 82%, rgba(14, 165, 233, 0.38), transparent 46%),
+        radial-gradient(circle at 50% 50%, rgba(6, 78, 59, 0.22), transparent 65%),
+        linear-gradient(145deg, #01080e 0%, #051c2c 50%, #032524 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Cuadrícula animada bien visible en el fondo */
+    .blueprint-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.13) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 211, 153, 0.13) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: 0;
+      animation: panGrid 26s linear infinite;
+    }
+
+    @keyframes panGrid {
+      0% { background-position: 0 0; }
+      100% { background-position: 68px 68px; }
+    }
+
+    /* Orbes brillantes de fondo */
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.52;
+      animation: driftOrb 13s ease-in-out infinite alternate;
+    }
+
+    .orb-green {
+      width: 340px;
+      height: 340px;
+      background: #10b981;
+      top: 6%;
+      left: -60px;
+    }
+
+    .orb-blue {
+      width: 370px;
+      height: 370px;
+      background: #0ea5e9;
+      bottom: 6%;
+      right: -70px;
+      animation-delay: -6s;
+    }
+
+    @keyframes driftOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(45px, -35px) scale(1.14); }
+    }
+
+    /* Destellos flotantes */
+    .sparkle {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+      animation: floatSparkle 7s ease-in-out infinite;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    @keyframes floatSparkle {
+      0%, 100% { transform: translateY(0) scale(0.8); opacity: 0.35; }
+      50% { transform: translateY(-24px) scale(1.35); opacity: 0.95; }
+    }
+
+    /* Messi caminando abajo por encima de la card */
+    .messi-walker {
+      position: fixed;
+      bottom: 0;
+      left: -170px;
+      width: 130px;
+      height: auto;
+      z-index: 25;
+      pointer-events: none;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 14px rgba(52, 211, 153, 0.35));
+      opacity: 0;
+    }
+
+    .messi-walker.walking {
+      animation: walkAcross 11s linear forwards, stepBounce 0.45s ease-in-out infinite;
+    }
+
+    @keyframes walkAcross {
+      0% {
+        left: -165px;
+        opacity: 0;
+      }
+      8% {
+        opacity: 0.98;
+      }
+      90% {
+        opacity: 0.98;
+      }
+      100% {
+        left: calc(100vw + 165px);
+        opacity: 0;
+      }
+    }
+
+    @keyframes stepBounce {
+      0%, 100% { transform: translateY(0px) rotate(-2deg); }
+      50% { transform: translateY(-9px) rotate(2deg); }
+    }
+
+    /* Messi asomándose por encima de la card */
+    .messi-peek {
+      position: fixed;
+      width: 135px;
+      height: auto;
+      z-index: 25;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.75) translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 20px rgba(56, 189, 248, 0.45));
+    }
+
+    .messi-peek.show {
+      opacity: 0.96;
+      transform: scale(1) translateY(0px);
+    }
+
+    /* Ventana emergente brillante con alto contraste frente al fondo */
+    #intro-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background:
+        radial-gradient(circle at 22% 20%, rgba(16, 185, 129, 0.16), transparent 42%),
+        radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.18), transparent 46%),
+        rgba(1, 7, 12, 0.86);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      transition: opacity 0.55s ease, visibility 0.55s ease;
+    }
+
+    #intro-screen.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-card {
+      position: relative;
+      overflow: hidden;
+      max-width: 455px;
+      width: 100%;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.24), rgba(6, 30, 46, 0.88), rgba(14, 165, 233, 0.25));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid var(--green-bright);
+      border-radius: 28px;
+      padding: 2.2rem 1.8rem;
+      text-align: center;
+      box-shadow:
+        0 26px 65px rgba(0, 0, 0, 0.78),
+        0 0 42px rgba(16, 185, 129, 0.36),
+        0 0 85px rgba(14, 165, 233, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      animation: floatCard 3.6s ease-in-out infinite, pulseBorder 3s ease-in-out infinite alternate;
+    }
+
+    .intro-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+    }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-9px); }
+    }
+
+    @keyframes pulseBorder {
+      0% { border-color: rgba(52, 211, 153, 0.85); }
+      100% { border-color: rgba(56, 189, 248, 1); }
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.26), rgba(14, 165, 233, 0.26));
+      border: 1px solid var(--blue-bright);
+      color: #bae6fd;
+      padding: 0.32rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.9px;
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.3);
+      animation: badgePulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    .intro-card h1 {
+      font-size: clamp(1.65rem, 5vw, 2rem);
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0.8rem 0;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .intro-card p {
+      color: #e2e8f0;
+      font-size: 0.98rem;
+      line-height: 1.55;
+      margin-bottom: 1.6rem;
+    }
+
+    .btn-glow {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.96rem;
+      border: none;
+      padding: 0.8rem 1.75rem;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 10px 26px rgba(16, 185, 129, 0.4);
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .btn-glow::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -75%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+      transform: skewX(-25deg);
+      animation: buttonShine 3.2s infinite;
+    }
+
+    @keyframes buttonShine {
+      0%, 60% { left: -75%; }
+      100% { left: 140%; }
+    }
+
+    .btn-glow:hover {
+      transform: scale(1.04);
+      box-shadow: 0 12px 32px rgba(56, 189, 248, 0.55);
+    }
+
+    /* Barra de navegación de ancho completo */
+    .navbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 50;
+      background: linear-gradient(90deg, rgba(4, 24, 36, 0.88), rgba(5, 34, 42, 0.88), rgba(4, 24, 36, 0.88));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+      padding: calc(0.75rem + env(safe-area-inset-top)) 2rem 0.75rem;
+    }
+
+    .navbar::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+      opacity: 0.75;
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.6px;
+      text-decoration: none;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+    }
+
+    .brand-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-bright);
+      animation: dotPulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.65; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .nav-links a {
+      position: relative;
+      text-decoration: none;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      transition: color 0.22s ease, background 0.22s ease;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-links a.active {
+      color: #fff;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .nav-links a.active::after {
+      content: "";
+      position: absolute;
+      left: 20%;
+      right: 20%;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright));
+      box-shadow: 0 0 10px var(--green-bright);
+    }
+
+    /* Área centrada para que la card quepa fija en pantalla */
+    .stage {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 820px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem 1.1rem calc(4.2rem + env(safe-area-inset-bottom));
+    }
+
+    .welcome-card {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.16), rgba(5, 24, 36, 0.72), rgba(14, 165, 233, 0.18));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 1.75rem 1.95rem;
+      box-shadow:
+        0 22px 50px rgba(0, 0, 0, 0.58),
+        0 0 38px rgba(16, 185, 129, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      animation: fadeUp 0.6s ease both, cardBreath 5.5s ease-in-out infinite alternate;
+    }
+
+    .welcome-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--green-bright), var(--blue-bright), transparent);
+      animation: topSweep 4.5s linear infinite;
+    }
+
+    @keyframes topSweep {
+      0% { opacity: 0.45; }
+      50% { opacity: 1; }
+      100% { opacity: 0.45; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes cardBreath {
+      0% { box-shadow: 0 22px 50px rgba(0, 0, 0, 0.58), 0 0 28px rgba(16, 185, 129, 0.16); }
+      100% { box-shadow: 0 22px 50px rgba(0, 0, 0, 0.58), 0 0 48px rgba(14, 165, 233, 0.28); }
+    }
+
+    .hero-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .celebrate-icon {
+      font-size: 1.75rem;
+      animation: wiggleCake 2.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.45));
+    }
+
+    @keyframes wiggleCake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-8deg) scale(1.08); }
+      75% { transform: rotate(8deg) scale(1.08); }
+    }
+
+    .hero-title {
+      font-size: clamp(1.75rem, 4.2vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 0.8rem;
+    }
+
+    .hero-title span {
+      background: linear-gradient(90deg, var(--green-bright), var(--blue-bright), var(--green-bright));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientFlow 4s linear infinite;
+    }
+
+    @keyframes gradientFlow {
+      to { background-position: 200% center; }
+    }
+
+    .lead {
+      font-size: clamp(0.95rem, 1.4vw, 1.04rem);
+      line-height: 1.58;
+      color: #e2e8f0;
+      margin-bottom: 0.9rem;
+    }
+
+    .surname-roast {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.2), rgba(14, 165, 233, 0.24));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-left: 4px solid var(--blue-bright);
+      border-radius: 14px;
+      padding: 0.85rem 1.15rem;
+      font-size: clamp(0.92rem, 1.3vw, 1rem);
+      line-height: 1.5;
+      color: #f0f9ff;
+      margin: 0.85rem 0;
+    }
+
+    .tqm-text {
+      margin-top: 0.65rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green-bright);
+      display: inline-block;
+      animation: softGlowText 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes softGlowText {
+      from { text-shadow: 0 0 8px rgba(52, 211, 153, 0.2); }
+      to { text-shadow: 0 0 18px rgba(52, 211, 153, 0.55); }
+    }
+
+    .actions-row {
+      margin-top: 1.25rem;
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-secondary-link {
+      text-decoration: none;
+      background: rgba(14, 165, 233, 0.2);
+      border: 1px solid var(--blue-bright);
+      color: #e0f2fe;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 999px;
+      transition: all 0.22s ease;
+    }
+
+    .btn-secondary-link:hover {
+      background: rgba(16, 185, 129, 0.28);
+      border-color: var(--green-bright);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    /* Barra flotante de audio */
+    .audio-bar {
+      position: fixed;
+      bottom: calc(0.85rem + env(safe-area-inset-bottom));
+      right: 0.9rem;
+      z-index: 80;
+      background: rgba(3, 20, 30, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--green-bright);
+      border-radius: 999px;
+      padding: 0.45rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 18px rgba(16, 185, 129, 0.22);
+    }
+
+    .audio-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(90deg, var(--green-main), var(--blue-main));
+      color: #02131d;
+      font-weight: 800;
+      font-size: 0.78rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .audio-meta {
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .audio-meta strong {
+      display: block;
+      color: var(--green-bright);
+    }
+
+    #yt-box {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      opacity: 0.01;
+      pointer-events: none;
+      bottom: 0;
+      left: 0;
+    }
+
+    /* Ajustes específicos para iPhone y pantallas pequeñas */
+    @media (max-width: 600px) {
+      .navbar {
+        padding: calc(0.6rem + env(safe-area-inset-top)) 0.8rem 0.6rem;
+      }
+
+      .nav-inner {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .brand {
+        font-size: 0.86rem;
+      }
+
+      .nav-links {
+        gap: 0.15rem;
+      }
+
+      .nav-links a {
+        font-size: 0.78rem;
+        padding: 0.32rem 0.6rem;
+      }
+
+      .stage {
+        padding: 0.65rem 0.85rem calc(4.3rem + env(safe-area-inset-bottom));
+      }
+
+      .welcome-card {
+        padding: 1.25rem 1.15rem;
+        border-radius: 22px;
+      }
+
+      .celebrate-icon {
+        font-size: 1.4rem;
+      }
+
+      .surname-roast {
+        padding: 0.75rem 0.95rem;
+      }
+
+      .actions-row {
+        margin-top: 1rem;
+        gap: 0.55rem;
+      }
+
+      .btn-glow,
+      .btn-secondary-link {
+        padding: 0.68rem 1.1rem;
+        font-size: 0.84rem;
+      }
+
+      .messi-walker {
+        width: 95px;
+      }
+
+      .messi-peek {
+        width: 98px;
+      }
+
+      .audio-bar {
+        padding: 0.38rem 0.7rem;
+        gap: 0.45rem;
+      }
+
+      .audio-btn {
+        width: 28px;
+        height: 28px;
+      }
+
+      .audio-meta {
+        font-size: 0.68rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blueprint-grid"></div>
+  <div class="ambient-orb orb-green"></div>
+  <div class="ambient-orb orb-blue"></div>
+
+  <!-- Destellos suaves en verde y azul -->
+  <div class="sparkle" style="top: 16%; left: 12%; color: #34d399; animation-delay: 0s;"></div>
+  <div class="sparkle" style="top: 28%; right: 14%; color: #38bdf8; animation-delay: -1.8s;"></div>
+  <div class="sparkle" style="bottom: 24%; left: 18%; color: #38bdf8; animation-delay: -3.2s;"></div>
+  <div class="sparkle" style="bottom: 30%; right: 16%; color: #34d399; animation-delay: -5s;"></div>
+
+  <!-- Imágenes animadas de Messi POR ENCIMA de la card -->
+  <img src="messi.png" alt="" class="messi-walker" id="messiWalker" />
+  <img src="messi.png" alt="" class="messi-peek" id="messiPeek" />
+
+  <!-- Ventana emergente brillante -->
+  <div id="intro-screen">
+    <div class="intro-card">
+      <div class="badge-pill">PARA JEREMY • HASTA ECUADOR</div>
+      <h1>¡Feliz cumpleaños,<br>Jeremy Ríos Ríos!</h1>
+      <p>
+        Sube el volumen para la sorpresa preparada. Dale clic aquí abajo para abrirla.
+      </p>
+      <button class="btn-glow" onclick="enterSite()">🎉 Abrir sorpresa</button>
+    </div>
+  </div>
+
+  <!-- Barra de navegación de ancho completo -->
+  <header class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-dot"></span>
+        JEREMY • RÍOS RÍOS
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="active">Inicio</a>
+        <a href="onepiece.html">One Piece</a>
+        <a href="messi.html">Messi</a>
+        <a href="arquitectura.html">Arquitectura</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Página de bienvenida fija en pantalla -->
+  <main class="stage">
+    <section class="welcome-card">
+      <div class="hero-top-row">
+        <div class="badge-pill">BIENVENIDO A TU DÍA</div>
+        <div class="celebrate-icon">🎂✨</div>
+      </div>
+
+      <h1 class="hero-title">Feliz cumpleaños, <span>Jeremy Ríos Ríos</span></h1>
+
+      <p class="lead">
+        Tengo preparada una sorpresa para ti aunque estés en otro país y no pueda darte nada en persona hoy; este detalle lo hice únicamente para ti para celebrar tu día.
+      </p>
+
+      <div class="surname-roast">
+        Coloco tus dos apellidos porque con uno solo no alcanzaba a arrastrar tantas malas decisiones.
+      </div>
+
+      <p class="tqm-text">Sabes que todo es broma, tqm.</p>
+
+      <div class="actions-row">
+        <button class="btn-glow" onclick="popConfetti()">🎊 Más confeti</button>
+        <a href="onepiece.html" class="btn-secondary-link">Ir a la siguiente página →</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Control de música -->
+  <div class="audio-bar">
+    <button class="audio-btn" id="audioToggle" onclick="toggleAudio()">❚❚</button>
+    <div class="audio-meta">
+      <strong>Sorpresa musical</strong>
+      <span id="audioState" style="color: #cbd5e1;">Sonando</span>
+    </div>
+  </div>
+
+  <audio id="localAudio" src="cepillin.mp3" loop></audio>
+  <div id="yt-box"><div id="yt-player"></div></div>
+
+  <script>
+    function popConfetti() {
+      confetti({
+        particleCount: 100,
+        spread: 78,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#34d399', '#0ea5e9', '#38bdf8', '#ffffff']
+      });
+    }
+
+    // 1. Animación de Messi caminando por abajo por encima de la card
+    function triggerMessiWalk() {
+      const walker = document.getElementById('messiWalker');
+      walker.classList.remove('walking');
+      void walker.offsetWidth;
+      walker.classList.add('walking');
+    }
+
+    // 2. Animación de Messi asomándose en distintos puntos por encima de la card
+    const peekSpots = [
+      { top: '13%', left: '4%', rotate: '12deg' },
+      { top: '18%', right: '4%', rotate: '-12deg' },
+      { bottom: '15%', left: '5%', rotate: '9deg' },
+      { bottom: '20%', right: '5%', rotate: '-10deg' },
+      { top: '50%', right: '3%', rotate: '-14deg' }
+    ];
+    let lastSpot = -1;
+
+    function triggerMessiPeek() {
+      const peek = document.getElementById('messiPeek');
+      let idx;
+      do {
+        idx = Math.floor(Math.random() * peekSpots.length);
+      } while (idx === lastSpot);
+      lastSpot = idx;
+
+      const spot = peekSpots[idx];
+      peek.style.top = spot.top || 'auto';
+      peek.style.bottom = spot.bottom || 'auto';
+      peek.style.left = spot.left || 'auto';
+      peek.style.right = spot.right || 'auto';
+      peek.style.transform = `scale(1) rotate(${spot.rotate})`;
+
+      peek.classList.add('show');
+      setTimeout(() => {
+        peek.classList.remove('show');
+      }, 3200);
+    }
+
+    function startMessiCameos() {
+      setTimeout(triggerMessiWalk, 700);
+      setInterval(triggerMessiWalk, 15000);
+
+      setTimeout(triggerMessiPeek, 3500);
+      setInterval(triggerMessiPeek, 7000);
+    }
+
+    // 3. Audio (cepillin.mp3 local o respaldo YouTube)
+    const localAudio = document.getElementById('localAudio');
+    let useLocal = false;
+    let ytPlayer = null;
+    let ytReady = false;
+    let playing = false;
+
+    localAudio.addEventListener('canplaythrough', () => {
+      useLocal = true;
+    });
+
+    const ytScript = document.createElement('script');
+    ytScript.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(ytScript);
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '1',
+        width: '1',
+        videoId: 'f4p_wL-4h20',
+        playerVars: {
+          autoplay: 0,
+          loop: 1,
+          playlist: 'f4p_wL-4h20'
+        },
+        events: {
+          onReady: () => { ytReady = true; }
+        }
+      });
+    }
+
+    function playSong() {
+      playing = true;
+      document.getElementById('audioToggle').textContent = '❚❚';
+      document.getElementById('audioState').textContent = 'Sonando';
+
+      if (useLocal) {
+        localAudio.play().catch(() => {});
+      } else if (ytReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+        ytPlayer.setVolume(100);
+        ytPlayer.playVideo();
+      } else {
+        setTimeout(() => {
+          if (playing && ytReady && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+            ytPlayer.setVolume(100);
+            ytPlayer.playVideo();
+          }
+        }, 1200);
+      }
+    }
+
+    function pauseSong() {
+      playing = false;
+      document.getElementById('audioToggle').textContent = '▶';
+      document.getElementById('audioState').textContent = 'Pausado';
+      localAudio.pause();
+      if (ytReady && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+        ytPlayer.pauseVideo();
+      }
+    }
+
+    function toggleAudio() {
+      if (playing) pauseSong();
+      else playSong();
+    }
+
+    function enterSite() {
+      document.getElementById('intro-screen').classList.add('hide');
+      popConfetti();
+      setTimeout(popConfetti, 500);
+      playSong();
+      startMessiCameos();
+    }
+  </script>
+</body>
+</html>
